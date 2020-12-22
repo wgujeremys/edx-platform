@@ -8,7 +8,8 @@ Soon the old import style will stop working.
 Status
 ======
 
-In Progress
+Complete as of 2020-01-18
+
 
 Context
 =======
@@ -32,7 +33,7 @@ This deprecation will take place in the following steps:
 
 4. Fix all instances where the ``sys.path``-based modules were ``patch``-ed in unit tests, as those patches no longer work.
 
-5. Once all instances of the ``sys.path``-based imports have been migrated in the ``edx-platform`` codebase, officially deprecate that import pattern for the next open-source release (as per the standard deprecation process).
+5. Once all instances of the ``sys.path``-based imports have been migrated in the ``edx-platform`` codebase, officially deprecate that import pattern for the next open-source release.
 
 6. Monitor logs to address continued use of the ``sys.path`` based import patterns.
 
