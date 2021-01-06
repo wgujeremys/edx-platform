@@ -40,3 +40,159 @@ Goals
 =====
 
 Eliminate modifications to ``sys.path`` to enable easier tool use in edx-platform.
+
+Addendum: Upgrade Guide
+=======================
+
+In the Koa release, usages of the old import style raised instances of
+``DeprecatedEdxPlatformImportWarning``, but did not break.
+
+In Lilac and beyond, old import paths will simply raise ``ImportError``,
+breaking any code that was not updated.
+
+Where to look for old import paths:
+
+* Forks of ``edx-platform`` itself.
+* Packages that import edx-platform code (``edx-completion``, ``edx-enterprise``, et al).
+* Repositories/files that override Ansible variables or ``edx-platform`` Django settings.
+
+What forms old import paths may take:
+
+* Direct imports (e.g. ``import courseware.views``)
+* Direct "from" imports (e.g. ``from contentstore.models import VideoUploadConfig``)
+* String references to modules (e.g. ``@patch('edxmako.LOOKUP', {})``)
+* YAML references to modules (e.g. ``KEY_FUNCTION: util.memcache.safe_key``)
+
+What the old imports are, and their replacements:
+
++-------------------------------+----------------------------------------------+
++ **Old prefix**                | **New prefix**                               |
++-------------------------------+----------------------------------------------+
+| ``badges``                    | ``lms.djangoapps.badges``                    |
++-------------------------------+----------------------------------------------+
+| ``branding``                  | ``lms.djangoapps.branding``                  |
++-------------------------------+----------------------------------------------+
+| ``bulk_email``                | ``lms.djangoapps.bulk_email``                |
++-------------------------------+----------------------------------------------+
+| ``bulk_enroll``               | ``lms.djangoapps.bulk_enroll``               |
++-------------------------------+----------------------------------------------+
+| ``ccx``                       | ``lms.djangoapps.ccx``                       |
++-------------------------------+----------------------------------------------+
+| ``certificates``              | ``lms.djangoapps.certificates``              |
++-------------------------------+----------------------------------------------+
+| ``commerce``                  | ``lms.djangoapps.commerce``                  |
++-------------------------------+----------------------------------------------+
+| ``course_api``                | ``lms.djangoapps.course_api``                |
++-------------------------------+----------------------------------------------+
+| ``course_blocks``             | ``lms.djangoapps.course_blocks``             |
++-------------------------------+----------------------------------------------+
+| ``course_goals``              | ``lms.djangoapps.course_goals``              |
++-------------------------------+----------------------------------------------+
+| ``course_home_api``           | ``lms.djangoapps.course_home_api``           |
++-------------------------------+----------------------------------------------+
+| ``courseware``                | ``lms.djangoapps.courseware``                |
++-------------------------------+----------------------------------------------+
+| ``coursewarehistoryextended`` | ``lms.djangoapps.coursewarehistoryextended`` |
++-------------------------------+----------------------------------------------+
+| ``course_wiki``               | ``lms.djangoapps.course_wiki``               |
++-------------------------------+----------------------------------------------+
+| ``dashboard``                 | ``lms.djangoapps.dashboard``                 |
++-------------------------------+----------------------------------------------+
+| ``debug``                     | ``lms.djangoapps.debug``                     |
++-------------------------------+----------------------------------------------+
+| ``discussion``                | ``lms.djangoapps.discussion``                |
++-------------------------------+----------------------------------------------+
+| ``edxnotes``                  | ``lms.djangoapps.edxnotes``                  |
++-------------------------------+----------------------------------------------+
+| ``email_marketing``           | ``lms.djangoapps.email_marketing``           |
++-------------------------------+----------------------------------------------+
+| ``experiments``               | ``lms.djangoapps.experiments``               |
++-------------------------------+----------------------------------------------+
+| ``gating``                    | ``lms.djangoapps.gating``                    |
++-------------------------------+----------------------------------------------+
+| ``grades``                    | ``lms.djangoapps.grades``                    |
++-------------------------------+----------------------------------------------+
+| ``instructor``                | ``lms.djangoapps.instructor``                |
++-------------------------------+----------------------------------------------+
+| ``instructor_analytics``      | ``lms.djangoapps.instructor_analytics``      |
++-------------------------------+----------------------------------------------+
+| ``instructor_task``           | ``lms.djangoapps.instructor_task``           |
++-------------------------------+----------------------------------------------+
+| ``learner_dashboard``         | ``lms.djangoapps.learner_dashboard``         |
++-------------------------------+----------------------------------------------+
+| ``lms_initialization``        | ``lms.djangoapps.lms_initialization``        |
++-------------------------------+----------------------------------------------+
+| ``lms_xblock``                | ``lms.djangoapps.lms_xblock``                |
++-------------------------------+----------------------------------------------+
+| ``lti_provider``              | ``lms.djangoapps.lti_provider``              |
++-------------------------------+----------------------------------------------+
+| ``mailing``                   | ``lms.djangoapps.mailing``                   |
++-------------------------------+----------------------------------------------+
+| ``mobile_api``                | ``lms.djangoapps.mobile_api``                |
++-------------------------------+----------------------------------------------+
+| ``monitoring``                | ``lms.djangoapps.monitoring``                |
++-------------------------------+----------------------------------------------+
+| ``program_enrollments``       | ``lms.djangoapps.program_enrollments``       |
++-------------------------------+----------------------------------------------+
+| ``rss_proxy``                 | ``lms.djangoapps.rss_proxy``                 |
++-------------------------------+----------------------------------------------+
+| ``shoppingcart``              | ``lms.djangoapps.shoppingcart``              |
++-------------------------------+----------------------------------------------+
+| ``staticbook``                | ``lms.djangoapps.staticbook``                |
++-------------------------------+----------------------------------------------+
+| ``static_template_view``      | ``lms.djangoapps.static_template_view``      |
++-------------------------------+----------------------------------------------+
+| ``support``                   | ``lms.djangoapps.support``                   |
++-------------------------------+----------------------------------------------+
+| ``survey``                    | ``lms.djangoapps.survey``                    |
++-------------------------------+----------------------------------------------+
+| ``teams``                     | ``lms.djangoapps.teams``                     |
++-------------------------------+----------------------------------------------+
+| ``tests``                     | ``lms.djangoapps.tests``                     |
++-------------------------------+----------------------------------------------+
+| ``verify_student``            | ``lms.djangoapps.verify_student``            |
++-------------------------------+----------------------------------------------+
+| ``course_action_state``       | ``common.djangoapps.course_action_state``    |
++-------------------------------+----------------------------------------------+
+| ``course_modes``              | ``common.djangoapps.course_modes``           |
++-------------------------------+----------------------------------------------+
+| ``database_fixups``           | ``common.djangoapps.database_fixups``        |
++-------------------------------+----------------------------------------------+
+| ``edxmako``                   | ``common.djangoapps.edxmako``                |
++-------------------------------+----------------------------------------------+
+| ``entitlements``              | ``common.djangoapps.entitlements``           |
++-------------------------------+----------------------------------------------+
+| ``pipeline_mako``             | ``common.djangoapps.pipeline_mako``          |
++-------------------------------+----------------------------------------------+
+| ``static_replace``            | ``common.djangoapps.static_replace``         |
++-------------------------------+----------------------------------------------+
+| ``status``                    | ``common.djangoapps.status``                 |
++-------------------------------+----------------------------------------------+
+| ``student``                   | ``common.djangoapps.student``                |
++-------------------------------+----------------------------------------------+
+| ``terrain``                   | ``common.djangoapps.terrain``                |
++-------------------------------+----------------------------------------------+
+| ``third_party_auth``          | ``common.djangoapps.third_party_auth``       |
++-------------------------------+----------------------------------------------+
+| ``track``                     | ``common.djangoapps.track``                  |
++-------------------------------+----------------------------------------------+
+| ``util``                      | ``common.djangoapps.util``                   |
++-------------------------------+----------------------------------------------+
+| ``xblock_django``             | ``common.djangoapps.xblock_django``          |
++-------------------------------+----------------------------------------------+
+| ``api``                       | ``cms.djangoapps.api``                       |
++-------------------------------+----------------------------------------------+
+| ``cms_user_tasks``            | ``cms.djangoapps.cms_user_tasks``            |
++-------------------------------+----------------------------------------------+
+| ``contentstore``              | ``cms.djangoapps.contentstore``              |
++-------------------------------+----------------------------------------------+
+| ``course_creators``           | ``cms.djangoapps.course_creators``           |
++-------------------------------+----------------------------------------------+
+| ``maintenance``               | ``cms.djangoapps.maintenance``               |
++-------------------------------+----------------------------------------------+
+| ``models``                    | ``cms.djangoapps.models``                    |
++-------------------------------+----------------------------------------------+
+| ``pipeline_js``               | ``cms.djangoapps.pipeline_js``               |
++-------------------------------+----------------------------------------------+
+| ``xblock_config``             | ``cms.djangoapps.xblock_config``             |
++-------------------------------+----------------------------------------------+
