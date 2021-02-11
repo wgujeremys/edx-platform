@@ -1,8 +1,6 @@
 """
 Views for the V1 Program Learner Dashboard API.
 """
-
-import json
 from django.http import Http404
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import authentication, permissions
@@ -85,7 +83,7 @@ class ProgramListView(APIView):
     )
     permission_classes = (permissions.IsAuthenticated,)
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):  # pylint: disable=unused-argument
         """
         Return a list programs a user is enrolled in.
         """
@@ -97,6 +95,6 @@ class ProgramListView(APIView):
 
         meter = ProgramProgressMeter(site=request.site, user=user)
         context = _prepare_program_context(meter.engaged_programs, meter.progress())
-        context['marketing_url'] = get_program_marketing_url(programs_config),
+        context['marketing_url'] = get_program_marketing_url(programs_config)
 
         return Response(context)
