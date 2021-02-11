@@ -146,6 +146,8 @@ urlpatterns = [
         name='settings_handler'),
     url(r'^settings/grading/{}(/)?(?P<grader_index>\d+)?$'.format(settings.COURSE_KEY_PATTERN),
         contentstore_views.grading_handler, name='grading_handler'),
+    url(r'^settings/teamsconfig/{}(/)?(?P<grader_index>\d+)?$'.format(settings.COURSE_KEY_PATTERN),
+        contentstore_views.teamset_handler, name='teamset_handler'),
     url(r'^settings/advanced/{}$'.format(settings.COURSE_KEY_PATTERN), contentstore_views.advanced_settings_handler,
         name='advanced_settings_handler'),
     url(r'^textbooks/{}$'.format(settings.COURSE_KEY_PATTERN), contentstore_views.textbooks_list_handler,

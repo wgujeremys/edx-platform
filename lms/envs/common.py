@@ -4049,10 +4049,8 @@ RETIREMENT_STATES = [
 USERNAME_REPLACEMENT_WORKER = "REPLACE WITH VALID USERNAME"
 
 ############## Settings for Microfrontends  #########################
-# If running a Gradebook container locally,
-# modify lms/envs/private.py to give it a non-null value
-WRITABLE_GRADEBOOK_URL = None
 
+WRITABLE_GRADEBOOK_URL = None
 PROFILE_MICROFRONTEND_URL = None
 ORDER_HISTORY_MICROFRONTEND_URL = None
 ACCOUNT_MICROFRONTEND_URL = None

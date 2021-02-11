@@ -49,6 +49,7 @@ from openedx.core.djangoapps.site_configuration import helpers as configuration_
 from openedx.core.djangolib.js_utils import dump_js_escaped_json
 from openedx.core.lib.course_tabs import CourseTabPluginManager
 from openedx.core.lib.courses import course_image_url
+from openedx.core.lib.teams_config import TeamsConfig
 from openedx.features.content_type_gating.models import ContentTypeGatingConfig
 from openedx.features.content_type_gating.partitions import CONTENT_TYPE_GATING_SCHEME
 from openedx.features.course_experience.waffle import ENABLE_COURSE_ABOUT_SIDEBAR_HTML
@@ -121,7 +122,8 @@ __all__ = ['course_info_handler', 'course_handler', 'course_listing',
            'advanced_settings_handler',
            'course_notifications_handler',
            'textbooks_list_handler', 'textbooks_detail_handler',
-           'group_configurations_list_handler', 'group_configurations_detail_handler']
+           'group_configurations_list_handler', 'group_configurations_detail_handler',
+           'teamset_handler',]
 
 WAFFLE_NAMESPACE = 'studio_home'
 
@@ -1284,6 +1286,64 @@ def grading_handler(request, course_key_string, grader_index=None):
             elif request.method == "DELETE" and grader_index is not None:
                 CourseGradingModel.delete_grader(course_key, grader_index, request.user)
                 return JsonResponse()
+
+@login_required
+@ensure_csrf_cookie
+@require_http_methods(("GET", "POST", "PUT", "DELETE"))
+@expect_json
+def teamset_handler(request, course_key_string, grader_index=None):
+    """
+    Course Grading policy configuration
+    GET
+        html: get the page
+        json no grader_index: get the CourseGrading model (graceperiod, cutoffs, and graders)
+        json w/ grader_index: get the specific grader
+    PUT
+        json no grader_index: update the Course through the CourseGrading model
+        json w/ grader_index: create or update the specific grader (create if index out of range)
+    """
+    course_key = CourseKey.from_string(course_key_string)
+    with modulestore().bulk_operations(course_key):
+        course_module = get_course_and_check_access(course_key, request.user)
+
+        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
+            import pdb; pdb.set_trace()
+            course_details = course_module.teams_configuration
+
+            course_authoring_microfrontend_url = get_proctored_exam_settings_url(course_module)
+
+            return render_to_response('settings_teams.html', {
+                'context_course': course_module,
+                'course_locator': course_key,
+                'course_details': course_details.cleaned_data,
+                'grading_url': reverse_course_url('grading_handler', course_key),
+                'teamset_url': reverse_course_url('teamset_handler', course_key),
+                'course_authoring_microfrontend_url': course_authoring_microfrontend_url,
+            })
+        elif 'application/json' in request.META.get('HTTP_ACCEPT', ''):
+            if request.method == 'GET':
+                if grader_index is None:
+                    return JsonResponse(
+                        course_module.teams_configuration,
+                        # encoder serializes dates, old locations, and instances
+                        encoder=CourseSettingsEncoder
+                    )
+                else:
+                    return JsonResponse(course_module.teams_configuration['team_sets'][grader_index])
+            elif request.method in ('POST', 'PUT'):  # post or put, doesn't matter.
+                # None implies update the whole model (cutoffs, graceperiod, and graders) not a specific grader
+                if grader_index is None:
+                    course_module.teams_configuration = TeamsConfig(request.json)
+                    modulestore().update_item(course_module, request.user.id)
+
+                    return JsonResponse(course_module.teams_configuration.cleaned_data)
+                else:
+                    import pdb; pdb.set_trace()
+                    return JsonResponse(course_module.teams_configuration.cleaned_data)
+            elif request.method == "DELETE" and grader_index is not None:
+                import pdb; pdb.set_trace()
+                return JsonResponse()
+
 
 
 def _refresh_course_tabs(request, course_module):
