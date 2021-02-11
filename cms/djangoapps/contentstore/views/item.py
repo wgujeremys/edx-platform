@@ -1,7 +1,4 @@
 """Views for items (modules)."""
-
-
-import hashlib  # lint-amnesty, pylint: disable=unused-import
 import logging
 from collections import OrderedDict
 from datetime import datetime

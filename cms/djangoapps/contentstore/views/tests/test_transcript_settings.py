@@ -2,7 +2,6 @@
 
 
 import json
-from io import BytesIO  # lint-amnesty, pylint: disable=unused-import
 
 import ddt
 import six
