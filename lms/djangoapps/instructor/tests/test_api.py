@@ -52,13 +52,9 @@ from common.djangoapps.student.roles import (  # lint-amnesty, pylint: disable=u
     CourseBetaTesterRole,
     CourseDataResearcherRole,
     CourseFinanceAdminRole,
-    CourseInstructorRole,
-    CourseSalesAdminRole
+    CourseInstructorRole
 )
-from common.djangoapps.student.tests.factories import (  # lint-amnesty, pylint: disable=unused-import
-    AdminFactory,
-    UserFactory
-)
+from common.djangoapps.student.tests.factories import UserFactory  # lint-amnesty, pylint: disable=unused-import
 from lms.djangoapps.bulk_email.models import BulkEmailFlag, CourseEmail, CourseEmailTemplate
 from lms.djangoapps.certificates.api import generate_user_certificates
 from lms.djangoapps.certificates.models import CertificateStatuses
@@ -68,8 +64,7 @@ from lms.djangoapps.courseware.tests.factories import (  # lint-amnesty, pylint:
     BetaTesterFactory,
     GlobalStaffFactory,
     InstructorFactory,
-    StaffFactory,
-    UserProfileFactory
+    StaffFactory
 )
 from lms.djangoapps.courseware.tests.helpers import LoginEnrollmentTestCase
 from lms.djangoapps.experiments.testutils import override_experiment_waffle_flag
