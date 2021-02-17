@@ -333,7 +333,6 @@ LEARNING_MICROFRONTEND_URL = 'http://localhost:2000'
 ACCOUNT_MICROFRONTEND_URL = 'http://localhost:1997'
 LOGISTRATION_MICROFRONTEND_URL = 'http://localhost:1999'
 LOGISTRATION_MICROFRONTEND_DOMAIN = 'localhost:1999'
-WRITABLE_GRADEBOOK_URL = 'http://localhost:1994'
 
 ############## Docker based devstack settings #######################
 

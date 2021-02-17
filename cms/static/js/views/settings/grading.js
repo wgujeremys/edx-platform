@@ -73,8 +73,7 @@ define(['js/views/validation',
                },
                this);
                 gradeCollection.each(function(gradeModel) {
-                    var rendered = self.template({model: gradeModel});
-                    HtmlUtils.append(gradelist, rendered);
+                    HtmlUtils.append(gradelist, self.template({model: gradeModel}));
                     var newEle = gradelist.children().last();
                     var newView = new GraderView({el: newEle,
                         model: gradeModel, collection: gradeCollection});
