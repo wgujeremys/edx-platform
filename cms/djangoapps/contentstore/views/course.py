@@ -516,14 +516,14 @@ def course_listing(request):
     """
 
     optimization_enabled = GlobalStaff().has_user(request.user) and \
-        LegacyWaffleSwitchNamespace(name=WAFFLE_NAMESPACE).is_enabled(u'enable_global_staff_optimization')
+        LegacyWaffleSwitchNamespace(name=WAFFLE_NAMESPACE).is_enabled('enable_global_staff_optimization')
 
     org = request.GET.get('org', '') if optimization_enabled else None
     courses_iter, in_process_course_actions = get_courses_accessible_to_user(request, org)
     user = request.user
     libraries = []
     if not split_library_view_on_dashboard() and LIBRARIES_ENABLED:
-        libraries = _accessible_libraries_iter(request.user)
+        libraries = _accessible_libraries_iter(request.user, org)
 
     def format_in_process_course_view(uca):
         """
@@ -549,6 +549,7 @@ def course_listing(request):
     split_archived = settings.FEATURES.get(u'ENABLE_SEPARATE_ARCHIVED_COURSES', False)
     active_courses, archived_courses = _process_courses_list(courses_iter, in_process_course_actions, split_archived)
     in_process_course_actions = [format_in_process_course_view(uca) for uca in in_process_course_actions]
+    remember_user_archived_courses(request, archived_courses)
 
     return render_to_response(u'index.html', {
         'courses': active_courses,
@@ -567,9 +568,16 @@ def course_listing(request):
         'allow_unicode_course_id': settings.FEATURES.get(u'ALLOW_UNICODE_COURSE_ID', False),
         'allow_course_reruns': settings.FEATURES.get(u'ALLOW_COURSE_RERUNS', True),
         'optimization_enabled': optimization_enabled,
-        'active_tab': 'courses'
+        'active_tab': 'courses',
+        'query_params': {'org':org} if org else {}
     })
 
+
+def remember_user_archived_courses(request,status):
+    """
+    Remember if user have archived courses .
+    """
+    request.session.setdefault('has_archived_courses',bool(status))
 
 @login_required
 @ensure_csrf_cookie
@@ -577,7 +585,13 @@ def library_listing(request):
     """
     List all Libraries available to the logged in user
     """
-    libraries = _accessible_libraries_iter(request.user) if LIBRARIES_ENABLED else []
+    optimization_enabled = GlobalStaff().has_user(request.user) and \
+        LegacyWaffleSwitchNamespace(name=WAFFLE_NAMESPACE).is_enabled('enable_global_staff_optimization')
+
+    org = request.GET.get('org', '') if optimization_enabled else None
+    libraries = _accessible_libraries_iter(request.user, org) if LIBRARIES_ENABLED else []
+    has_archived_courses = request.session.get('has_archived_courses', False)
+
     data = {
         'in_process_course_actions': [],
         'courses': [],
@@ -588,11 +602,12 @@ def library_listing(request):
         'request_course_creator_url': reverse('request_course_creator'),
         'course_creator_status': _get_course_creator_status(request.user),
         'allow_unicode_course_id': settings.FEATURES.get('ALLOW_UNICODE_COURSE_ID', False),
-        'archived_courses': True,
+        'archived_courses': has_archived_courses,
         'allow_course_reruns': settings.FEATURES.get(u'ALLOW_COURSE_RERUNS', True),
         'rerun_creator_status': GlobalStaff().has_user(request.user),
         'split_studio_home': split_library_view_on_dashboard(),
-        'active_tab': 'libraries'
+        'active_tab': 'libraries',
+        'query_params': {'org':org} if org else {}
     }
     return render_to_response('index.html', data)
 
