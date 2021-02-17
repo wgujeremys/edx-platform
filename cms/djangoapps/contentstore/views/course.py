@@ -1305,45 +1305,25 @@ def teamset_handler(request, course_key_string, grader_index=None):
     course_key = CourseKey.from_string(course_key_string)
     with modulestore().bulk_operations(course_key):
         course_module = get_course_and_check_access(course_key, request.user)
-
-        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
-            import pdb; pdb.set_trace()
-            course_details = course_module.teams_configuration
-
+        if request.method == 'GET':
+            teams_configuration = course_module.teams_configuration
             course_authoring_microfrontend_url = get_proctored_exam_settings_url(course_module)
-
-            return render_to_response('settings_teams.html', {
+            rendered = render_to_response('settings_teams.html', {
                 'context_course': course_module,
                 'course_locator': course_key,
-                'course_details': course_details.cleaned_data,
                 'grading_url': reverse_course_url('grading_handler', course_key),
-                'teamset_url': reverse_course_url('teamset_handler', course_key),
+                'teams_configuration_url': reverse_course_url('teamset_handler', course_key),
                 'course_authoring_microfrontend_url': course_authoring_microfrontend_url,
+                'teams_configuration': teams_configuration.cleaned_data
             })
-        elif 'application/json' in request.META.get('HTTP_ACCEPT', ''):
-            if request.method == 'GET':
-                if grader_index is None:
-                    return JsonResponse(
-                        course_module.teams_configuration,
-                        # encoder serializes dates, old locations, and instances
-                        encoder=CourseSettingsEncoder
-                    )
-                else:
-                    return JsonResponse(course_module.teams_configuration['team_sets'][grader_index])
-            elif request.method in ('POST', 'PUT'):  # post or put, doesn't matter.
-                # None implies update the whole model (cutoffs, graceperiod, and graders) not a specific grader
-                if grader_index is None:
-                    course_module.teams_configuration = TeamsConfig(request.json)
-                    modulestore().update_item(course_module, request.user.id)
-
-                    return JsonResponse(course_module.teams_configuration.cleaned_data)
-                else:
-                    import pdb; pdb.set_trace()
-                    return JsonResponse(course_module.teams_configuration.cleaned_data)
-            elif request.method == "DELETE" and grader_index is not None:
-                import pdb; pdb.set_trace()
-                return JsonResponse()
-
+            return rendered
+        elif request.method in ('POST', 'PUT'):
+            errors = CourseMetadata.validate_team_settings(request.json)
+            if errors:
+                return JsonResponseBadRequest(errors)
+            course_module.teams_configuration = TeamsConfig(request.json)
+            modulestore().update_item(course_module, request.user.id)
+            return JsonResponse(course_module.teams_configuration.cleaned_data)
 
 
 def _refresh_course_tabs(request, course_module):

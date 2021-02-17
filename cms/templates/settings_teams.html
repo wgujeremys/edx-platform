@@ -26,14 +26,6 @@
 <%block name="jsextra">
   <link rel="stylesheet" type="text/css" href="${static.url('js/vendor/timepicker/jquery.timepicker.css')}" />
 </%block>
-<%block name="requirejs">
-    require(["js/factories/settings_team_set"], function(SettingsTeamsConfigFactory) {
-        SettingsTeamsConfigFactory(
-            _.extend(${dump_js_escaped_json(course_details, cls=CourseSettingsEncoder) | n, decode.utf8}),
-            "${teamset_url | n, js_escaped_string}"
-        );
-    });
-</%block>
 
 <%block name="content">
 <div class="wrapper-mast wrapper">
@@ -48,39 +40,24 @@
 <div class="wrapper-content wrapper">
   <section class="content">
     <article class="content-primary" role="main">
-      <form id="settings_details" class="settings-teamsetsss" method="post" action="">
-        <section class="group-settings team-sets">
-          <header>
-            <h2 class="title-2">${_("Team Sets Configurations")}</h2>
-            <span class="tip">${_("Blah blah blah")}</span>
-          </header>
-
-          <ol class="list-input course-teams-configuration-list enum">
-
-          </ol>
-
-          <div class="actions">
-            <a href="#" class="new-button new-course-teams-configuration-item add-team-set">
-              <span class="icon fa fa-plus" aria-hidden="true"></span> ${_("New Team Set")}
-            </a>
-          </div>
-        </section>
-		<hr class="divide" />
-		<section class="group-settings max-team-size">
-			<header>
-			  <h2 class="title-2">${_("Max Team Size")}</h2>
-			  <span class="tip">${_("Blah Blah")}</span>
-			</header>
-  
-			<ol class="list-input">
-			  <li class="field text" id="field-course-teams-max-team-size">
-				<label for="course-teams-max-team-size">${_("Max Team Size:")}</label>
-				<input type="text" class="short" id="course-teams-max-team-size"/>
-				<span class="tip tip-inline">${_("Leeway on due dates")}</span>
-			  </li>
-			</ol>
-		  </section> 
-      </form>
+      ${static.renderReact(
+        component="TeamsConfiguration",
+        id="teams_configuration_page",
+        props={
+            'initialTeamSets': {
+              team_set['id']: {
+                'teamSetId': team_set['id'],
+                'displayName': team_set['name'],
+                'description': team_set['description'],
+                'type': team_set['id'],
+                'maxSize': team_set.get('max_team_size') or 0
+              }
+              for team_set in teams_configuration['team_sets']
+            },
+            'initialCourseMaxTeamSize': teams_configuration['max_team_size'],
+            'teamsConfigURL': teams_configuration_url
+        }
+      )}
     </article>
 
     <aside class="content-supplementary" role="complementary">
