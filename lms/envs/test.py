@@ -14,10 +14,7 @@ sessions. Assumes structure:
 
 
 import logging
-import os
 from collections import OrderedDict
-from random import choice  # lint-amnesty, pylint: disable=unused-import
-from string import ascii_letters, digits, punctuation  # lint-amnesty, pylint: disable=unused-import
 from uuid import uuid4
 
 import openid.oidutil

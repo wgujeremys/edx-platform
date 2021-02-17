@@ -54,9 +54,12 @@ from path import Path as path
 ################################# WIKI ###################################
 from lms.djangoapps.course_wiki import settings as course_wiki_settings  # pylint: disable=wrong-import-position
 from lms.djangoapps.lms_xblock.mixin import LmsBlockMixin
-from openedx.core.constants import COURSE_ID_PATTERN, COURSE_KEY_PATTERN, COURSE_KEY_REGEX
 from openedx.core.djangoapps.plugins.constants import ProjectType, SettingsType  # pylint: disable=wrong-import-position
-from openedx.core.djangoapps.theming.helpers_dirs import get_theme_base_dirs_from_settings, get_themes_unchecked
+from openedx.core.constants import COURSE_KEY_REGEX, COURSE_KEY_PATTERN, COURSE_ID_PATTERN
+from openedx.core.djangoapps.theming.helpers_dirs import (
+    get_themes_unchecked,
+    get_theme_base_dirs_from_settings
+)
 from openedx.core.lib.derived import derived, derived_collection_entry
 from openedx.core.lib.rooted_paths import rooted_glob  # pylint: disable=wrong-import-position
 from openedx.core.release import doc_version
