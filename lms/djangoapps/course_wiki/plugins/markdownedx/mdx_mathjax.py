@@ -1,12 +1,7 @@
 # Source: https://github.com/mayoff/python-markdown-mathjax  # lint-amnesty, pylint: disable=missing-module-docstring
 
 
-import markdown
-
-try:
-    pass
-except:  # lint-amnesty, pylint: disable=bare-except
-    from markdown import etree, AtomicString
+from markdown import etree, AtomicString
 
 
 class MathJaxPattern(markdown.inlinepatterns.Pattern):  # lint-amnesty, pylint: disable=missing-class-docstring
