@@ -8,6 +8,7 @@ try:
 except:  # lint-amnesty, pylint: disable=bare-except
     from markdown import etree, AtomicString
 
+
 class MathJaxPattern(markdown.inlinepatterns.Pattern):  # lint-amnesty, pylint: disable=missing-class-docstring
 
     def __init__(self):
