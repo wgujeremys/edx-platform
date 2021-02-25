@@ -4,10 +4,10 @@
 import uuid
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import ddt
 import pytz
-import six
 from config_models.models import cache
 from django.conf import settings
 from django.test import RequestFactory, TestCase
@@ -16,11 +16,8 @@ from django.urls import reverse
 from django.utils import timezone
 from edx_toggles.toggles.testutils import override_waffle_flag
 from freezegun import freeze_time
-from mock import patch
 from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locator import CourseLocator
-from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase, SharedModuleStoreTestCase
-from xmodule.modulestore.tests.factories import CourseFactory
 
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.course_modes.tests.factories import CourseModeFactory
@@ -37,12 +34,12 @@ from lms.djangoapps.certificates.api import (
     generate_example_certificates,
     generate_user_certificates,
     get_allowlisted_users,
-    get_certificate_for_user,
-    get_certificates_for_user,
-    get_certificates_for_user_by_course_keys,
     get_certificate_footer_context,
+    get_certificate_for_user,
     get_certificate_header_context,
     get_certificate_url,
+    get_certificates_for_user,
+    get_certificates_for_user_by_course_keys,
     is_certificate_invalid,
     set_cert_generation_enabled
 )
@@ -63,12 +60,14 @@ from lms.djangoapps.certificates.tests.factories import (
 from lms.djangoapps.courseware.tests.factories import GlobalStaffFactory
 from lms.djangoapps.grades.tests.utils import mock_passing_grade
 from openedx.core.djangoapps.site_configuration.tests.test_util import with_site_configuration
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase, SharedModuleStoreTestCase
+from xmodule.modulestore.tests.factories import CourseFactory
 
 FEATURES_WITH_CERTS_ENABLED = settings.FEATURES.copy()
 FEATURES_WITH_CERTS_ENABLED['CERTIFICATES_HTML_VIEW'] = True
 
 
-class WebCertificateTestMixin(object):
+class WebCertificateTestMixin:
     """
     Mixin with helpers for testing Web Certificates.
     """
@@ -347,7 +346,7 @@ class CertificateGetTests(SharedModuleStoreTestCase):
         cls.freezer = freeze_time(cls.now)
         cls.freezer.start()
 
-        super(CertificateGetTests, cls).setUpClass()
+        super().setUpClass()
         cls.student = UserFactory()
         cls.student_no_cert = UserFactory()
         cls.uuid = uuid.uuid4().hex
@@ -398,7 +397,7 @@ class CertificateGetTests(SharedModuleStoreTestCase):
 
     @classmethod
     def tearDownClass(cls):
-        super(CertificateGetTests, cls).tearDownClass()
+        super().tearDownClass()
         cls.freezer.stop()
 
     def test_get_certificate_for_user(self):
@@ -549,7 +548,7 @@ class GenerateUserCertificatesTest(EventTestMixin, WebCertificateTestMixin, Modu
         self.assert_event_emitted(
             'edx.certificate.created',
             user_id=self.student.id,
-            course_id=six.text_type(self.course.id),
+            course_id=str(self.course.id),
             certificate_url=get_certificate_url(self.student.id, self.course.id),
             certificate_id=cert.verify_uuid,
             enrollment_mode=cert.mode,
@@ -640,7 +639,7 @@ class CertificateGenerationEnabledTest(EventTestMixin, TestCase):
             event_name = '.'.join(['edx', 'certificate', 'generation', cert_event_type])
             self.assert_event_emitted(
                 event_name,
-                course_id=six.text_type(self.COURSE_KEY),
+                course_id=str(self.COURSE_KEY),
             )
 
         self._assert_enabled_for_course(self.COURSE_KEY, expect_enabled)
@@ -764,8 +763,7 @@ class CertificatesBrandingTest(ModuleStoreTestCase):
         data = get_certificate_header_context(is_secure=True)
 
         # Make sure there are not unexpected keys in dict returned by 'get_certificate_header_context'
-        six.assertCountEqual(
-            self,
+        self.assertCountEqual(
             list(data.keys()),
             ['logo_src', 'logo_url']
         )
@@ -784,8 +782,7 @@ class CertificatesBrandingTest(ModuleStoreTestCase):
         data = get_certificate_footer_context()
 
         # Make sure there are not unexpected keys in dict returned by 'get_certificate_footer_context'
-        six.assertCountEqual(
-            self,
+        self.assertCountEqual(
             list(data.keys()),
             ['company_about_url', 'company_privacy_url', 'company_tos_url']
         )

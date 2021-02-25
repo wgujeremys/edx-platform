@@ -2,39 +2,38 @@
 Tests for certificate generation handler
 """
 import logging
+from unittest import mock
 
 import ddt
-import mock
 from edx_toggles.toggles import LegacyWaffleSwitch
-from edx_toggles.toggles.testutils import override_waffle_flag
-from edx_toggles.toggles.testutils import override_waffle_switch
+from edx_toggles.toggles.testutils import override_waffle_flag, override_waffle_switch
 from waffle.testutils import override_switch
-from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
-from xmodule.modulestore.tests.factories import CourseFactory
 
 from common.djangoapps.student.tests.factories import CourseEnrollmentFactory, UserFactory
-from lms.djangoapps.certificates.generation_handler import CERTIFICATES_USE_ALLOWLIST
 from lms.djangoapps.certificates.generation_handler import (
+    CERTIFICATES_USE_ALLOWLIST,
     _can_generate_allowlist_certificate_for_status,
     is_using_certificate_allowlist,
     can_generate_allowlist_certificate,
     generate_allowlist_certificate_task,
     is_using_certificate_allowlist_and_is_on_allowlist
 )
-from lms.djangoapps.certificates.models import GeneratedCertificate, CertificateStatuses
+from lms.djangoapps.certificates.models import CertificateStatuses, GeneratedCertificate
 from lms.djangoapps.certificates.tests.factories import (
+    CertificateInvalidationFactory,
     CertificateWhitelistFactory,
-    GeneratedCertificateFactory,
-    CertificateInvalidationFactory
+    GeneratedCertificateFactory
 )
 from openedx.core.djangoapps.certificates.config import waffle
+from xmodule.modulestore.tests.django_utils import ModuleStoreTestCase
+from xmodule.modulestore.tests.factories import CourseFactory
 
 log = logging.getLogger(__name__)
 
 ID_VERIFIED_METHOD = 'lms.djangoapps.verify_student.services.IDVerificationService.user_is_verified'
 AUTO_GENERATION_NAMESPACE = waffle.WAFFLE_NAMESPACE
 AUTO_GENERATION_NAME = waffle.AUTO_CERTIFICATE_GENERATION
-AUTO_GENERATION_SWITCH_NAME = '{}.{}'.format(AUTO_GENERATION_NAMESPACE, AUTO_GENERATION_NAME)
+AUTO_GENERATION_SWITCH_NAME = f'{AUTO_GENERATION_NAMESPACE}.{AUTO_GENERATION_NAME}'
 AUTO_GENERATION_SWITCH = LegacyWaffleSwitch(AUTO_GENERATION_NAMESPACE, AUTO_GENERATION_NAME)
 
 
