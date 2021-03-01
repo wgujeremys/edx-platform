@@ -80,16 +80,16 @@ edx-django-release-util             # Release utils for the edx release pipeline
 edx-django-sites-extensions
 edx-django-utils>=3.12.0            # Utilities for cache, monitoring, and plugins; 3.12.0+ for set_code_owner_attribute method
 edx-drf-extensions
-edx-enterprise
+-e git+https://github.com/edx/edx-enterprise.git@3940d21ae82601b30807c07181fad21a8b8b9ff2#egg=edx_enterprise
 edx-event-routing-backends
 edx-milestones
 edx-organizations
-edx-proctoring>=2.0.1
+-e git+https://github.com/edx/edx-proctoring.git@6f5a24398babd9e51db5a0af466cf35c3936c700#egg=edx_proctoring
 edx-proctoring-proctortrack==1.0.5  # Intentionally and permanently pinned to ensure code changes are reviewed
 edx-rest-api-client
 edx-search
 edx-sga
-edx-submissions
+-e git+https://github.com/edx/edx-submissions.git@680f5ebcac1a1d3a5bee667105df997b6f0ff026#egg=edx-submissions
 edx-toggles                         # Feature toggles management
 edx-user-state-client
 edx-when
