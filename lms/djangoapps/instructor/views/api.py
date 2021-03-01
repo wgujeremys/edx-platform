@@ -56,10 +56,8 @@ from common.djangoapps.student.models import (
     ManualEnrollmentAudit,
     Registration,
     UserProfile,
-    anonymous_id_for_user,
     get_user_by_username_or_email,
     is_email_retired,
-    unique_id_for_user
 )
 from common.djangoapps.student.roles import CourseFinanceAdminRole, CourseSalesAdminRole
 from common.djangoapps.util.file import (
@@ -1371,6 +1369,7 @@ def get_proctored_exam_results(request, course_id):
     return JsonResponse({"status": success_status})
 
 
+@transaction.non_atomic_requests
 @ensure_csrf_cookie
 @cache_control(no_cache=True, no_store=True, must_revalidate=True)
 @ratelimit(key="user", rate="1/5m", block=True)
@@ -1379,32 +1378,10 @@ def get_anon_ids(request, course_id):
     """
     Respond with 2-column CSV output of user-id, anonymized-user-id
     """
-    # TODO: the User.objects query and CSV generation here could be
-    # centralized into instructor_analytics. Currently instructor_analytics
-    # has similar functionality but not quite what's needed.
-    course_id = CourseKey.from_string(course_id)
-
-    def csv_response(filename, header, rows):
-        """Returns a CSV http response for the given header and rows (excel/utf-8)."""
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename={}'.format(str(filename))
-        writer = csv.writer(response, dialect='excel', quotechar='"', quoting=csv.QUOTE_ALL)
-        # In practice, there should not be non-ascii data in this query,
-        # but trying to do the right thing anyway.
-        encoded = [str(s) for s in header]
-        writer.writerow(encoded)
-        for row in rows:
-            encoded = [str(s) for s in row]
-            writer.writerow(encoded)
-        return response
-
-    students = User.objects.filter(
-        courseenrollment__course_id=course_id,
-    ).order_by('id')
-    header = ['User ID', 'Anonymized User ID', 'Course Specific Anonymized User ID']
-    rows = [[s.id, unique_id_for_user(s), anonymous_id_for_user(s, course_id)]
-            for s in students]
-    return csv_response(str(course_id).replace('/', '-') + '-anon-ids.csv', header, rows)
+    report_type = _('Anonymized User IDs')
+    success_status = SUCCESS_MESSAGE_TEMPLATE.format(report_type=report_type)
+    task_api.generate_anonymous_ids(request, course_id)
+    return JsonResponse({"status": success_status})
 
 
 @require_POST
