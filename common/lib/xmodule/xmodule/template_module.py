@@ -54,7 +54,7 @@ class CustomTagDescriptor(RawDescriptor):
                 template_name = child_impl.text
             else:
                 # TODO (vshnayder): better exception type
-                raise Exception("Could not find impl attribute in customtag {0}"
+                raise Exception("Could not find impl attribute in customtag {}"
                                 .format(self.location))
 
         params = dict(list(xmltree.items()))

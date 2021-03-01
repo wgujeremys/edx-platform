@@ -15,7 +15,6 @@ from copy import deepcopy
 
 from pkg_resources import resource_string
 
-import six  # lint-amnesty, pylint: disable=unused-import
 from lxml import etree
 from openedx.core.djangolib.markup import Text, HTML
 from xblock.fields import Boolean, Dict, List, Scope, String  # lint-amnesty, pylint: disable=wrong-import-order
@@ -28,7 +27,7 @@ log = logging.getLogger(__name__)
 _ = lambda text: text
 
 
-class PollFields(object):  # lint-amnesty, pylint: disable=missing-class-docstring
+class PollFields:  # lint-amnesty, pylint: disable=missing-class-docstring
     # Name of poll to use in links to this poll
     display_name = String(
         help=_("The display name for this component."),
