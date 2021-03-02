@@ -18,7 +18,6 @@ from lms.djangoapps.course_home_api.toggles import (
 from openedx.core.lib.course_tabs import CourseTabPluginManager
 from openedx.features.course_experience import (
     RELATIVE_DATES_FLAG,
-    DISABLE_UNIFIED_COURSE_TAB_FLAG,
     default_course_url_name
 )
 from openedx.features.course_experience.url_helpers import get_learning_mfe_home_url
@@ -61,13 +60,10 @@ class CoursewareTab(EnrolledTab):
         super().__init__(tab_dict)
 
     @classmethod
-    def is_enabled(cls, course, user=None):
+    def is_enabled(cls, course, user=None):  # pylint: disable=unused-argument
         """
         Returns true if this tab is enabled.
         """
-        if DISABLE_UNIFIED_COURSE_TAB_FLAG.is_enabled(course.id):
-            return super(CoursewareTab, cls).is_enabled(course, user)
-        # If this is the unified course tab then it is always enabled
         return True
 
 
