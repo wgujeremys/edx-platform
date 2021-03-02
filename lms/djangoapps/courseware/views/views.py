@@ -103,7 +103,6 @@ from openedx.core.djangoapps.enrollments.permissions import ENROLL_IN_COURSE
 from openedx.core.djangoapps.models.course_details import CourseDetails
 from openedx.core.djangoapps.plugin_api.views import EdxFragmentView
 from openedx.core.djangoapps.programs.utils import ProgramMarketingDataExtender
-from openedx.core.djangoapps.self_paced.models import SelfPacedConfiguration
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 from openedx.core.djangoapps.util.user_messages import PageLevelMessages
 from openedx.core.djangoapps.zendesk_proxy.utils import create_zendesk_ticket
@@ -115,7 +114,6 @@ from openedx.features.course_experience import DISABLE_UNIFIED_COURSE_TAB_FLAG, 
 from openedx.features.course_experience.course_tools import CourseToolsPluginManager
 from openedx.features.course_experience.url_helpers import get_legacy_courseware_url
 from openedx.features.course_experience.utils import dates_banner_should_display
-from openedx.features.course_experience.views.course_dates import CourseDatesFragmentView
 from openedx.features.course_experience.waffle import ENABLE_COURSE_ABOUT_SIDEBAR_HTML
 from openedx.features.course_experience.waffle import waffle as course_experience_waffle
 from openedx.features.enterprise_support.api import data_sharing_consent_required
@@ -472,15 +470,6 @@ def course_info(request, course_id):
         if not user_can_skip_entrance_exam(user, course):
             return redirect(reverse('courseware', args=[text_type(course.id)]))
 
-        # Construct the dates fragment
-        dates_fragment = None
-
-        if request.user.is_authenticated:
-            # TODO: LEARNER-611: Remove enable_course_home_improvements
-            if SelfPacedConfiguration.current().enable_course_home_improvements:
-                # Shared code with the new Course Home (DONE)
-                dates_fragment = CourseDatesFragmentView().render_to_fragment(request, course_id=course_id)
-
         # Shared code with the new Course Home (DONE)
         # Get the course tools enabled for this user and course
         course_tools = CourseToolsPluginManager.get_enabled_course_tools(request, course_key)
@@ -523,8 +512,9 @@ def course_info(request, course_id):
             'studio_url': get_studio_url(course, 'course_info'),
             'show_enroll_banner': show_enroll_banner,
             'user_is_enrolled': user_is_enrolled,
-            'dates_fragment': dates_fragment,
+            'dates_fragment': None,
             'course_tools': course_tools,
+            'resume_course_url': None,
         }
         context.update(
             get_experiment_user_metadata_context(
@@ -532,12 +522,6 @@ def course_info(request, course_id):
                 user,
             )
         )
-
-        # Get the URL of the user's last position in order to display the 'where you were last' message
-        context['resume_course_url'] = None
-        # TODO: LEARNER-611: Remove enable_course_home_improvements
-        if SelfPacedConfiguration.current().enable_course_home_improvements:
-            context['resume_course_url'] = get_last_accessed_courseware(course, request, user)
 
         if not check_course_open_for_learner(user, course):
             # Disable student view button if user is staff and
