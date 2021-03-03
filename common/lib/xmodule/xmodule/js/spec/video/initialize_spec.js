@@ -222,8 +222,7 @@ function(Initialize) {
                 it('check mapping', function() {
                     var map = {
                         0.25: '0.75',
-                        '0.50': '0.75',
-                        '2.0': '1.50'
+                        '0.50': '0.75'
                     };
 
                     $.each(map, function(key, expected) {
