@@ -147,32 +147,32 @@
                    function() {
                     // First open menu.
                        $speedControl.trigger(keyPressEvent(KEY.UP));
-                    // Focus on 1.50x speed
+                    // Focus on 2.0x speed
                        speedEntries.eq(0).focus();
                        speedEntries.eq(0).trigger(keyPressEvent(KEY.ENTER));
 
                     // Menu is closed, focus has been returned to speed
-                    // control and video speed is 1.50x.
+                    // control and video speed is 2.0x.
                        expect($speedButton).toBeFocused();
-                       expect($('.video-speeds li[data-speed="1.50"]'))
+                       expect($('.video-speeds li[data-speed="2.0"]'))
                         .toHaveClass('is-active');
-                       expect($('.speeds .value')).toHaveHtml('1.50x');
+                       expect($('.speeds .value')).toHaveHtml('2.0x');
                    });
 
                 it('SPACE keydown on speed entry selects speed and closes menu',
                    function() {
                     // First open menu.
                        $speedControl.trigger(keyPressEvent(KEY.UP));
-                    // Focus on 1.50x speed
+                    // Focus on 2.0x speed
                        speedEntries.eq(0).focus();
                        speedEntries.eq(0).trigger(keyPressEvent(KEY.SPACE));
 
                     // Menu is closed, focus has been returned to speed
-                    // control and video speed is 1.50x.
+                    // control and video speed is 2.0x.
                        expect($speedButton).toBeFocused();
-                       expect($('.video-speeds li[data-speed="1.50"]'))
+                       expect($('.video-speeds li[data-speed="2.0"]'))
                         .toHaveClass('is-active');
-                       expect($('.speeds .value')).toHaveHtml('1.50x');
+                       expect($('.speeds .value')).toHaveHtml('2.0x');
                    });
             });
         });

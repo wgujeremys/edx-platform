@@ -194,7 +194,7 @@ function(Initialize) {
             describe('HTML5', function() {
                 beforeEach(function() {
                     state = {
-                        speeds: ['0.75', '1.0', '1.25', '1.50'],
+                        speeds: ['0.75', '1.0', '1.25', '1.50', '2.0'],
                         storage: jasmine.createSpyObj('storage', ['setItem'])
                     };
                 });
