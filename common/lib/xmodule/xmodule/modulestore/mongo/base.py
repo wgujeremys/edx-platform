@@ -725,7 +725,7 @@ class MongoModuleStore(ModuleStoreDraftAndPublished, ModuleStoreWriteBase, Mongo
                 results_by_url[location_url].setdefault('definition', {})['children'] = set(total_children)
             else:
                 results_by_url[location_url] = result
-            if location.block_type == 'course':
+            if location.block_type == 'course':  # pylint: disable=no-member
                 root = location_url
 
         # now traverse the tree and compute down the inherited metadata
@@ -1298,7 +1298,7 @@ class MongoModuleStore(ModuleStoreDraftAndPublished, ModuleStoreWriteBase, Mongo
             fields (dict): Fields to set on the course at initialization
             kwargs: Any optional arguments understood by a subset of modulestores to customize instantiation
 
-        Returns: a CourseDescriptor
+        Returns: a CourseBlock
 
         Raises:
             InvalidLocationError: If a course with the same org, course, and run already exists

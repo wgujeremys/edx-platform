@@ -7,7 +7,7 @@ import itertools
 import json
 import re
 import unittest
-from datetime import datetime, timedelta  # lint-amnesty, pylint: disable=unused-import
+from datetime import timedelta  # lint-amnesty, pylint: disable=unused-import
 
 import ddt
 import six
@@ -17,7 +17,6 @@ from django.test import TestCase
 from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils.timezone import now
-from edx_toggles.toggles.testutils import override_waffle_flag
 from milestones.tests.utils import MilestonesTestCaseMixin
 from mock import patch
 from opaque_keys import InvalidKeyError
@@ -31,8 +30,6 @@ from lms.djangoapps.certificates.tests.factories import GeneratedCertificateFact
 from openedx.core.djangoapps.catalog.tests.factories import ProgramFactory
 from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 from openedx.core.djangoapps.content.course_overviews.tests.factories import CourseOverviewFactory
-from openedx.core.djangoapps.schedules.config import COURSE_UPDATE_WAFFLE_FLAG
-from openedx.core.djangoapps.schedules.tests.factories import ScheduleFactory
 from openedx.core.djangoapps.site_configuration.tests.test_util import with_site_configuration_context
 from openedx.features.course_duration_limits.models import CourseDurationLimitConfig
 from openedx.features.course_experience.tests.views.helpers import add_course_mode
@@ -96,7 +93,7 @@ class TestStudentDashboardUnenrollments(SharedModuleStoreTestCase):
         with patch('common.djangoapps.student.views.dashboard.cert_info', side_effect=self.mock_cert):
             response = self.client.get(reverse('dashboard'))
 
-            self.assertEqual(pq(response.content)(self.UNENROLL_ELEMENT_ID).length, unenroll_action_count)
+            assert pq(response.content)(self.UNENROLL_ELEMENT_ID).length == unenroll_action_count
 
     @ddt.data(
         ('notpassing', 200),
@@ -119,10 +116,10 @@ class TestStudentDashboardUnenrollments(SharedModuleStoreTestCase):
                     {'enrollment_action': 'unenroll', 'course_id': self.course.id}
                 )
 
-                self.assertEqual(response.status_code, status_code)
+                assert response.status_code == status_code
                 if status_code == 200:
                     course_enrollment.assert_called_with(self.user, self.course.id)
-                    self.assertTrue(mock_refund_handler.called)
+                    assert mock_refund_handler.called
                 else:
                     course_enrollment.assert_not_called()
 
@@ -134,21 +131,21 @@ class TestStudentDashboardUnenrollments(SharedModuleStoreTestCase):
         ):
             response = self.client.get(reverse('dashboard'))
 
-            self.assertEqual(response.status_code, 200)
+            assert response.status_code == 200
 
     def test_course_run_refund_status_successful(self):
         """ Assert that view:course_run_refund_status returns correct Json for successful refund call."""
         with patch('common.djangoapps.student.models.CourseEnrollment.refundable', return_value=True):
             response = self.client.get(reverse('course_run_refund_status', kwargs={'course_id': self.course.id}))
 
-        self.assertEqual(json.loads(response.content.decode('utf-8')), {'course_refundable_status': True})
-        self.assertEqual(response.status_code, 200)
+        assert json.loads(response.content.decode('utf-8')) == {'course_refundable_status': True}
+        assert response.status_code == 200
 
         with patch('common.djangoapps.student.models.CourseEnrollment.refundable', return_value=False):
             response = self.client.get(reverse('course_run_refund_status', kwargs={'course_id': self.course.id}))
 
-        self.assertEqual(json.loads(response.content.decode('utf-8')), {'course_refundable_status': False})
-        self.assertEqual(response.status_code, 200)
+        assert json.loads(response.content.decode('utf-8')) == {'course_refundable_status': False}
+        assert response.status_code == 200
 
     def test_course_run_refund_status_invalid_course_key(self):
         """ Assert that view:course_run_refund_status returns correct Json for Invalid Course Key ."""
@@ -157,8 +154,8 @@ class TestStudentDashboardUnenrollments(SharedModuleStoreTestCase):
                                                         InvalidKeyError during look up.')
             response = self.client.get(reverse('course_run_refund_status', kwargs={'course_id': self.course.id}))
 
-        self.assertEqual(json.loads(response.content.decode('utf-8')), {'course_refundable_status': ''})
-        self.assertEqual(response.status_code, 406)
+        assert json.loads(response.content.decode('utf-8')) == {'course_refundable_status': ''}
+        assert response.status_code == 406
 
 
 @ddt.ddt
@@ -275,8 +272,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
 
         # Assert course sharing icons
         response = self.client.get(reverse('dashboard'))
-        self.assertEqual('Share on Twitter' in response.content.decode('utf-8'), set_marketing or set_social_sharing)
-        self.assertEqual('Share on Facebook' in response.content.decode('utf-8'), set_marketing or set_social_sharing)
+        assert ('Share on Twitter' in response.content.decode('utf-8')) == (set_marketing or set_social_sharing)
+        assert ('Share on Facebook' in response.content.decode('utf-8')) == (set_marketing or set_social_sharing)
 
     @patch.dict("django.conf.settings.FEATURES", {'ENABLE_PREREQUISITE_COURSES': True})
     def test_pre_requisites_appear_on_dashboard(self):
@@ -545,7 +542,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         mock_get_course_runs.return_value = course_runs
 
         response = self.client.get(self.path)
-        self.assertEqual(pq(response.content)(self.EMAIL_SETTINGS_ELEMENT_ID).length, 1)
+        assert pq(response.content)(self.EMAIL_SETTINGS_ELEMENT_ID).length == 1
 
     @patch.object(CourseOverview, 'get_from_id')
     @patch('common.djangoapps.student.views.dashboard.is_bulk_email_feature_enabled')
@@ -557,7 +554,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         mock_course_overview.return_value = CourseOverviewFactory(start=self.TOMORROW)
         CourseEntitlementFactory(user=self.user)
         response = self.client.get(self.path)
-        self.assertEqual(pq(response.content)(self.EMAIL_SETTINGS_ELEMENT_ID).length, 0)
+        assert pq(response.content)(self.EMAIL_SETTINGS_ELEMENT_ID).length == 0
 
     @patch.multiple('django.conf.settings', **MOCK_SETTINGS_HIDE_COURSES)
     def test_hide_dashboard_courses_until_activated(self):
@@ -566,7 +563,7 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         inactive users don't see the Courses list, but active users still do.
         """
         # Ensure active users see the course list
-        self.assertTrue(self.user.is_active)
+        assert self.user.is_active
         response = self.client.get(reverse('dashboard'))
         self.assertContains(response, 'You are not enrolled in any courses yet.')
 
@@ -704,14 +701,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         resume_button_html = self._remove_whitespace_from_html_string(resume_button_html)
         dashboard_html = self._remove_whitespace_from_response(response)
 
-        self.assertIn(
-            view_button_html,
-            dashboard_html
-        )
-        self.assertNotIn(
-            resume_button_html,
-            dashboard_html
-        )
+        assert view_button_html in dashboard_html
+        assert resume_button_html not in dashboard_html
 
     def test_resume_course_appears_on_dashboard(self):
         """
@@ -758,16 +749,9 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         resume_button_html = self._remove_whitespace_from_html_string(resume_button_html)
         dashboard_html = self._remove_whitespace_from_response(response)
 
-        self.assertIn(
-            resume_button_html,
-            dashboard_html
-        )
-        self.assertNotIn(
-            view_button_html,
-            dashboard_html
-        )
+        assert resume_button_html in dashboard_html
+        assert view_button_html not in dashboard_html
 
-    @override_waffle_flag(COURSE_UPDATE_WAFFLE_FLAG, True)
     def test_content_gating_course_card_changes(self):
         """
         When a course is expired, the links on the course card should be removed.
@@ -787,23 +771,14 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
         enrollment.created = self.THREE_YEARS_AGO + timedelta(days=1)
         enrollment.save()
 
-        # pylint: disable=unused-variable
-        schedule = ScheduleFactory(enrollment=enrollment)
-
         response = self.client.get(reverse('dashboard'))
         dashboard_html = self._remove_whitespace_from_response(response)
         access_expired_substring = 'Accessexpired'
         course_link_class = 'course-target-link'
 
-        self.assertNotIn(
-            course_link_class,
-            dashboard_html
-        )
+        assert course_link_class not in dashboard_html
 
-        self.assertIn(
-            access_expired_substring,
-            dashboard_html
-        )
+        assert access_expired_substring in dashboard_html
 
     def test_dashboard_with_resume_buttons_and_view_buttons(self):
         '''
@@ -907,14 +882,8 @@ class StudentDashboardTests(SharedModuleStoreTestCase, MilestonesTestCaseMixin, 
                 expected_button = html_for_view_buttons[i]
                 unexpected_button = html_for_resume_buttons[i] + html_for_entitlement[i]
 
-            self.assertIn(
-                expected_button,
-                dashboard_html
-            )
-            self.assertNotIn(
-                unexpected_button,
-                dashboard_html
-            )
+            assert expected_button in dashboard_html
+            assert unexpected_button not in dashboard_html
 
 
 @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')

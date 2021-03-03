@@ -7,6 +7,7 @@ Much of this file was broken out from views.py, previous history can be found th
 import json
 import logging
 import hashlib
+import re
 
 import six
 from django.conf import settings
@@ -25,7 +26,6 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_http_methods
 from edx_django_utils.monitoring import set_custom_attribute
 from ratelimit.decorators import ratelimit
-from ratelimitbackend.exceptions import RateLimitException
 from rest_framework.views import APIView
 
 from common.djangoapps.edxmako.shortcuts import render_to_response
@@ -37,11 +37,13 @@ from openedx.core.djangoapps.user_authn.exceptions import AuthFailedError
 from openedx.core.djangoapps.user_authn.toggles import should_redirect_to_authn_microfrontend
 from openedx.core.djangoapps.util.user_messages import PageLevelMessages
 from openedx.core.djangoapps.user_authn.views.password_reset import send_password_reset_email_for_user
+from openedx.core.djangoapps.user_authn.views.utils import ENTERPRISE_ENROLLMENT_URL_REGEX, UUID4_REGEX
 from openedx.core.djangoapps.user_authn.toggles import is_require_third_party_auth_enabled
 from openedx.core.djangoapps.user_authn.config.waffle import ENABLE_LOGIN_USING_THIRDPARTY_AUTH_ONLY
 from openedx.core.djangolib.markup import HTML, Text
 from openedx.core.lib.api.view_utils import require_post_params
-from common.djangoapps.student.helpers import get_next_url_for_login_page
+from openedx.features.enterprise_support.api import activate_learner_enterprise, get_enterprise_learner_data_from_api
+from common.djangoapps.student.helpers import get_next_url_for_login_page, get_redirect_url_with_host
 from common.djangoapps.student.models import LoginFailures, AllowedAuthUser, UserProfile
 from common.djangoapps.student.views import compose_and_send_activation_email
 from common.djangoapps.third_party_auth import pipeline, provider
@@ -180,6 +182,9 @@ def _authenticate_first_party(request, unauthenticated_user, third_party_auth_re
     """
     Use Django authentication on the given request, using rate limiting if configured
     """
+    should_be_rate_limited = getattr(request, 'limited', False)
+    if should_be_rate_limited:
+        raise AuthFailedError(_('Too many failed login attempts. Try again later.'))  # lint-amnesty, pylint: disable=raise-missing-from
 
     # If the user doesn't exist, we want to set the username to an invalid username so that authentication is guaranteed
     # to fail and we can take advantage of the ratelimited backend
@@ -191,17 +196,12 @@ def _authenticate_first_party(request, unauthenticated_user, third_party_auth_re
     if not third_party_auth_requested:
         _check_user_auth_flow(request.site, unauthenticated_user)
 
-    try:
-        password = normalize_password(request.POST['password'])
-        return authenticate(
-            username=username,
-            password=password,
-            request=request
-        )
-
-    # This occurs when there are too many attempts from the same IP address
-    except RateLimitException:
-        raise AuthFailedError(_('Too many failed login attempts. Try again later.'))  # lint-amnesty, pylint: disable=raise-missing-from
+    password = normalize_password(request.POST['password'])
+    return authenticate(
+        username=username,
+        password=password,
+        request=request
+    )
 
 
 def _handle_failed_authentication(user, authenticated_user):
@@ -387,13 +387,46 @@ def finish_auth(request):
     })
 
 
+def enterprise_selection_page(request, user, next_url):
+    """
+    Updates redirect url to enterprise selection page if user is associated
+    with multiple enterprises otherwise return the next url.
+
+    param:
+      next_url(string): The URL to redirect to after multiple enterprise selection or in case
+      the selection page is bypassed e.g when dealing with direct enrolment urls.
+    """
+    redirect_url = next_url
+
+    response = get_enterprise_learner_data_from_api(user)
+    if response and len(response) > 1:
+        redirect_url = reverse('enterprise_select_active') + '/?success_url=' + next_url
+
+        # Check to see if next url has an enterprise in it. In this case if user is associated with
+        # that enterprise, activate that enterprise and bypass the selection page.
+        if re.match(ENTERPRISE_ENROLLMENT_URL_REGEX, six.moves.urllib.parse.unquote(next_url)):
+            enterprise_in_url = re.search(UUID4_REGEX, next_url).group(0)
+            for enterprise in response:
+                if enterprise_in_url == str(enterprise['enterprise_customer']['uuid']):
+                    is_activated_successfully = activate_learner_enterprise(request, user, enterprise_in_url)
+                    if is_activated_successfully:
+                        redirect_url = next_url
+                    break
+
+    return redirect_url
+
+
 @ensure_csrf_cookie
 @require_http_methods(['POST'])
+@ratelimit(
+    key='openedx.core.djangoapps.util.ratelimit.request_post_email',
+    rate=settings.LOGISTRATION_PER_EMAIL_RATELIMIT_RATE,
+    method='POST',
+)  # lint-amnesty, pylint: disable=too-many-statements
 @ratelimit(
     key='openedx.core.djangoapps.util.ratelimit.real_ip',
     rate=settings.LOGISTRATION_RATELIMIT_RATE,
     method='POST',
-    block=True
 )  # lint-amnesty, pylint: disable=too-many-statements
 def login_user(request):
     """
@@ -478,13 +511,21 @@ def login_user(request):
 
         _handle_successful_authentication_and_login(possibly_authenticated_user, request)
 
-        redirect_url = None  # The AJAX method calling should know the default destination upon success
-        if is_user_third_party_authenticated:
-            running_pipeline = pipeline.get(request)
-            redirect_url = pipeline.get_complete_url(backend_name=running_pipeline['backend'])
+        # The AJAX method calling should know the default destination upon success
+        redirect_url, finish_auth_url = None, ''
 
+        if third_party_auth_requested:
+            running_pipeline = pipeline.get(request)
+            finish_auth_url = pipeline.get_complete_url(backend_name=running_pipeline['backend'])
+
+        if is_user_third_party_authenticated:
+            redirect_url = finish_auth_url
         elif should_redirect_to_authn_microfrontend():
-            redirect_url = get_next_url_for_login_page(request, include_host=True)
+            next_url, root_url = get_next_url_for_login_page(request, include_host=True)
+            redirect_url = get_redirect_url_with_host(
+                root_url,
+                enterprise_selection_page(request, possibly_authenticated_user, finish_auth_url or next_url)
+            )
 
         response = JsonResponse({
             'success': True,

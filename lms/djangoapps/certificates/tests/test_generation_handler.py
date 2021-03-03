@@ -16,7 +16,7 @@ from common.djangoapps.student.tests.factories import CourseEnrollmentFactory, U
 from lms.djangoapps.certificates.generation_handler import CERTIFICATES_USE_ALLOWLIST
 from lms.djangoapps.certificates.generation_handler import (
     _can_generate_allowlist_certificate_for_status,
-    _is_using_certificate_allowlist,
+    is_using_certificate_allowlist,
     can_generate_allowlist_certificate,
     generate_allowlist_certificate_task,
     is_using_certificate_allowlist_and_is_on_allowlist
@@ -31,7 +31,7 @@ from openedx.core.djangoapps.certificates.config import waffle
 
 log = logging.getLogger(__name__)
 
-ID_VERIFIED_METHOD = 'lms.djangoapps.verify_student.services.IDVerificationService.user_is_verified'
+ID_VERIFIED_METHOD = 'lms.djangoapps.verify_student.services.IDVerificationService.user_has_ever_been_verified'
 AUTO_GENERATION_NAMESPACE = waffle.WAFFLE_NAMESPACE
 AUTO_GENERATION_NAME = waffle.AUTO_CERTIFICATE_GENERATION
 AUTO_GENERATION_SWITCH_NAME = '{}.{}'.format(AUTO_GENERATION_NAMESPACE, AUTO_GENERATION_NAME)
@@ -68,27 +68,27 @@ class AllowlistTests(ModuleStoreTestCase):
         """
         Test the allowlist flag
         """
-        self.assertTrue(_is_using_certificate_allowlist(self.course_run_key))
+        assert is_using_certificate_allowlist(self.course_run_key)
 
     @override_waffle_flag(CERTIFICATES_USE_ALLOWLIST, active=False)
     def test_is_using_allowlist_false(self):
         """
         Test the allowlist flag without the override
         """
-        self.assertFalse(_is_using_certificate_allowlist(self.course_run_key))
+        assert not is_using_certificate_allowlist(self.course_run_key)
 
     def test_is_using_allowlist_and_is_on_list(self):
         """
         Test the allowlist flag and the presence of the user on the list
         """
-        self.assertTrue(is_using_certificate_allowlist_and_is_on_allowlist(self.user, self.course_run_key))
+        assert is_using_certificate_allowlist_and_is_on_allowlist(self.user, self.course_run_key)
 
     @override_waffle_flag(CERTIFICATES_USE_ALLOWLIST, active=False)
     def test_is_using_allowlist_and_is_on_list_with_flag_off(self):
         """
         Test the allowlist flag and the presence of the user on the list when the flag is off
         """
-        self.assertFalse(is_using_certificate_allowlist_and_is_on_allowlist(self.user, self.course_run_key))
+        assert not is_using_certificate_allowlist_and_is_on_allowlist(self.user, self.course_run_key)
 
     def test_is_using_allowlist_and_is_on_list_true(self):
         """
@@ -102,7 +102,7 @@ class AllowlistTests(ModuleStoreTestCase):
             mode="verified",
         )
         CertificateWhitelistFactory.create(course_id=self.course_run_key, user=u, whitelist=False)
-        self.assertFalse(is_using_certificate_allowlist_and_is_on_allowlist(u, self.course_run_key))
+        assert not is_using_certificate_allowlist_and_is_on_allowlist(u, self.course_run_key)
 
     @ddt.data(
         (CertificateStatuses.deleted, True),
@@ -134,42 +134,42 @@ class AllowlistTests(ModuleStoreTestCase):
             status=status,
         )
 
-        self.assertEqual(_can_generate_allowlist_certificate_for_status(cert), expected_response)
+        assert _can_generate_allowlist_certificate_for_status(cert) == expected_response
 
     def test_generation_status_for_none(self):
         """
         Test handling of certificate statuses for a non-existent cert
         """
-        self.assertEqual(_can_generate_allowlist_certificate_for_status(None), True)
+        assert _can_generate_allowlist_certificate_for_status(None) is True
 
     @override_waffle_flag(CERTIFICATES_USE_ALLOWLIST, active=False)
     def test_handle_invalid(self):
         """
         Test handling of an invalid user/course run combo
         """
-        self.assertFalse(can_generate_allowlist_certificate(self.user, self.course_run_key))
-        self.assertFalse(generate_allowlist_certificate_task(self.user, self.course_run_key))
+        assert not can_generate_allowlist_certificate(self.user, self.course_run_key)
+        assert not generate_allowlist_certificate_task(self.user, self.course_run_key)
 
     def test_handle_valid(self):
         """
         Test handling of a valid user/course run combo
         """
-        self.assertTrue(can_generate_allowlist_certificate(self.user, self.course_run_key))
-        self.assertTrue(generate_allowlist_certificate_task(self.user, self.course_run_key))
+        assert can_generate_allowlist_certificate(self.user, self.course_run_key)
+        assert generate_allowlist_certificate_task(self.user, self.course_run_key)
 
     def test_can_generate_auto_disabled(self):
         """
         Test handling when automatic generation is disabled
         """
         with override_waffle_switch(AUTO_GENERATION_SWITCH, active=False):
-            self.assertFalse(can_generate_allowlist_certificate(self.user, self.course_run_key))
+            assert not can_generate_allowlist_certificate(self.user, self.course_run_key)
 
     def test_can_generate_not_verified(self):
         """
         Test handling when the user's id is not verified
         """
         with mock.patch(ID_VERIFIED_METHOD, return_value=False):
-            self.assertFalse(can_generate_allowlist_certificate(self.user, self.course_run_key))
+            assert not can_generate_allowlist_certificate(self.user, self.course_run_key)
 
     def test_can_generate_not_enrolled(self):
         """
@@ -179,7 +179,7 @@ class AllowlistTests(ModuleStoreTestCase):
         cr = CourseFactory()
         key = cr.id  # pylint: disable=no-member
         CertificateWhitelistFactory.create(course_id=key, user=u)
-        self.assertFalse(can_generate_allowlist_certificate(u, key))
+        assert not can_generate_allowlist_certificate(u, key)
 
     def test_can_generate_not_whitelisted(self):
         """
@@ -194,7 +194,7 @@ class AllowlistTests(ModuleStoreTestCase):
             is_active=True,
             mode="verified",
         )
-        self.assertFalse(can_generate_allowlist_certificate(u, key))
+        assert not can_generate_allowlist_certificate(u, key)
 
     def test_can_generate_invalidated(self):
         """
@@ -222,4 +222,4 @@ class AllowlistTests(ModuleStoreTestCase):
             active=True
         )
 
-        self.assertFalse(can_generate_allowlist_certificate(u, key))
+        assert not can_generate_allowlist_certificate(u, key)

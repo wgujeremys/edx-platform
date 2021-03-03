@@ -45,7 +45,10 @@ from openedx.features.content_type_gating.models import ContentTypeGatingConfig
 from openedx.features.course_duration_limits.access import get_access_expiration_data
 from openedx.features.discounts.utils import generate_offer_data
 from common.djangoapps.student.models import (
-    CourseEnrollment, CourseEnrollmentCelebration, LinkedInAddToProfileConfiguration
+    CourseEnrollment,
+    CourseEnrollmentCelebration,
+    LinkedInAddToProfileConfiguration,
+    UserCelebration
 )
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.search import path_to_location
@@ -76,7 +79,7 @@ class CoursewareMeta:
         self.request.user = self.effective_user
         self.is_staff = has_access(self.effective_user, 'staff', self.overview).has_access
         self.enrollment_object = CourseEnrollment.get_enrollment(self.effective_user, self.course_key,
-                                                                 select_related=['celebration'])
+                                                                 select_related=['celebration', 'user__celebration'])
 
     def __getattr__(self, name):
         return getattr(self.overview, name)
@@ -86,20 +89,14 @@ class CoursewareMeta:
         This method is the "opposite" of _redirect_to_learning_mfe in
         lms/djangoapps/courseware/views/index.py. But not exactly...
 
-        1. It needs to respect the global
-           ENABLE_COURSEWARE_MICROFRONTEND feature flag and redirect users
-           out of the MFE experience if it's turned off.
-        2. It needs to redirect for old Mongo courses.
-        3. It does NOT need to worry about exams - the MFE will handle
+        1. It needs to redirect for old Mongo courses.
+        2. It does NOT need to worry about exams - the MFE will handle
            those on its own. As of this writing, it will redirect back to
            the LMS experience, but that may change soon.
-        4. Finally, it needs to redirect users who are bucketed out of
+        3. Finally, it needs to redirect users who are bucketed out of
            the MFE experience, but who aren't staff. Staff are allowed to
            stay.
         """
-        # REDIRECT: feature disabled globally
-        if not settings.FEATURES.get('ENABLE_COURSEWARE_MICROFRONTEND'):
-            return False
         # REDIRECT: Old Mongo courses, until removed from platform
         if self.course_key.deprecated:
             return False
@@ -202,8 +199,12 @@ class CoursewareMeta:
         """
         Returns a list of celebrations that should be performed.
         """
+        browser_timezone = self.request.query_params.get('browser_timezone', None)
         return {
             'first_section': CourseEnrollmentCelebration.should_celebrate_first_section(self.enrollment_object),
+            'streak_length_to_celebrate': UserCelebration.perform_streak_updates(
+                self.effective_user, self.course_key, browser_timezone
+            ),
         }
 
     @property

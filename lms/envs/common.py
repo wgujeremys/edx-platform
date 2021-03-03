@@ -94,6 +94,16 @@ FEATURES = {
     # .. toggle_warnings: None
     # .. toggle_tickets: https://github.com/edx/edx-platform/pull/2425
     'DISPLAY_DEBUG_INFO_TO_STAFF': True,
+
+    # .. toggle_name: FEATURES['DISPLAY_HISTOGRAMS_TO_STAFF']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: This displays histograms in the Staff Debug Info panel to course staff.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2014-02-13
+    # .. toggle_warnings: Generating histograms requires scanning the courseware_studentmodule table on each view. This
+    #   can make staff access to courseware very slow on large courses.
+    # .. toggle_tickets: https://github.com/edx/edx-platform/pull/2425
     'DISPLAY_HISTOGRAMS_TO_STAFF': False,  # For large courses this slows down courseware access for staff.
 
     'REROUTE_ACTIVATION_EMAIL': False,  # nonempty string = address for all activation emails
@@ -374,6 +384,17 @@ FEATURES = {
     'ENABLE_COSMETIC_DISPLAY_PRICE': False,
 
     # Automatically approve student identity verification attempts
+    # .. toggle_name: FEATURES['AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: If set to True, then we want to skip posting anything to Software Secure. Bypass posting
+    #   anything to Software Secure if the auto verify feature for testing is enabled. We actually don't even create
+    #   the message because that would require encryption and message signing that rely on settings.VERIFY_STUDENT
+    #   values that aren't set in dev. So we just pretend like we successfully posted and automatically approve student
+    #   identity verification attempts.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2013-10-03
+    # .. toggle_tickets: https://github.com/edx/edx-platform/pull/1184
     'AUTOMATIC_VERIFY_STUDENT_IDENTITY_FOR_TESTING': False,
 
     # Maximum number of rows to include in the csv file for downloading problem responses.
@@ -404,8 +425,18 @@ FEATURES = {
     # Hide any Personally Identifiable Information from application logs
     'SQUELCH_PII_IN_LOGS': True,
 
-    # Toggles the embargo functionality, which blocks users from
-    # the site or courses based on their location.
+    # .. toggle_name: FEATURES['EMBARGO']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: Turns on embargo functionality, which blocks users from
+    #   the site or courses based on their location. Embargo can restrict users by states
+    #   and whitelist/blacklist (IP Addresses (ie. 10.0.0.0), Networks (ie. 10.0.0.0/24)), or the user profile country.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2014-02-27
+    # .. toggle_target_removal_date: None
+    # .. toggle_warnings: reverse proxy should be configured appropriately for example Client IP address headers
+    #   (e.g HTTP_X_FORWARDED_FOR) should be configured.
+    # .. toggle_tickets: https://github.com/edx/edx-platform/pull/2749
     'EMBARGO': False,
 
     # Whether the Wiki subsystem should be accessible via the direct /wiki/ paths. Setting this to True means
@@ -542,10 +573,41 @@ FEATURES = {
     'EXPOSE_CACHE_PROGRAMS_ENDPOINT': False,
 
     # Courseware search feature
+    # .. toggle_name: FEATURES['ENABLE_COURSEWARE_SEARCH']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: When enabled, this adds a Search the course widget on the course outline and courseware
+    #   pages for searching courseware data.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2015-01-29
+    # .. toggle_warnings: In order to get this working, your courses data should be indexed in Elasticsearch. You will
+    #   see the search widget on the courseware page only if the DISABLE_COURSE_OUTLINE_PAGE_FLAG is set.
+    # .. toggle_tickets: https://github.com/edx/edx-platform/pull/6506
     'ENABLE_COURSEWARE_SEARCH': False,
+
+    # .. toggle_name: FEATURES['ENABLE_COURSEWARE_SEARCH_FOR_COURSE_STAFF']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: When enabled, this adds a Search the course widget on the course outline and courseware
+    #   pages for searching courseware data but for course staff users only.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2019-12-06
+    # .. toggle_warnings: In order to get this working, your courses data should be indexed in Elasticsearch. If
+    #   ENABLE_COURSEWARE_SEARCH is enabled then the search widget will be visible to all learners and this flag's
+    #   value does not matter in that case. This flag is enabled in devstack by default.
+    # .. toggle_tickets: https://openedx.atlassian.net/browse/TNL-6931
     'ENABLE_COURSEWARE_SEARCH_FOR_COURSE_STAFF': False,
 
     # Dashboard search feature
+    # .. toggle_name: FEATURES['ENABLE_DASHBOARD_SEARCH']
+    # .. toggle_implementation: DjangoSetting
+    # .. toggle_default: False
+    # .. toggle_description: When enabled, this adds a Search Your Courses widget on the dashboard page for searching
+    #   courseware data.
+    # .. toggle_use_cases: open_edx
+    # .. toggle_creation_date: 2015-01-29
+    # .. toggle_warnings: In order to get this working, your courses data should be indexed in Elasticsearch.
+    # .. toggle_tickets: https://github.com/edx/edx-platform/pull/6506
     'ENABLE_DASHBOARD_SEARCH': False,
 
     # log all information from cybersource callbacks
@@ -774,19 +836,6 @@ FEATURES = {
     # .. toggle_warnings: None
     # .. toggle_tickets: 'https://github.com/edx/edx-platform/pull/21616'
     'ENABLE_CHANGE_USER_PASSWORD_ADMIN': False,
-
-    # .. toggle_name: FEATURES['ENABLE_COURSEWARE_MICROFRONTEND']
-    # .. toggle_implementation: DjangoSetting
-    # .. toggle_default: False
-    # .. toggle_description: Set to True to enable the Courseware MFE at the platform level for global staff (see
-    #   REDIRECT_TO_COURSEWARE_MICROFRONTEND for course rollout)
-    # .. toggle_use_cases: open_edx
-    # .. toggle_creation_date: 2020-03-05
-    # .. toggle_target_removal_date: None
-    # .. toggle_tickets: DEPR-109
-    # .. toggle_warnings: Also set settings.LEARNING_MICROFRONTEND_URL and see REDIRECT_TO_COURSEWARE_MICROFRONTEND for
-    #   rollout.
-    'ENABLE_COURSEWARE_MICROFRONTEND': False,
 
     # .. toggle_name: FEATURES['ENABLE_AUTHN_MICROFRONTEND']
     # .. toggle_implementation: DjangoSetting
@@ -2825,7 +2874,6 @@ INSTALLED_APPS = [
 
     # Discussion forums
     'openedx.core.djangoapps.django_comment_common',
-    'openedx.core.djangoapps.discussions',
 
     # Notes
     'lms.djangoapps.edxnotes',
@@ -2979,6 +3027,7 @@ INSTALLED_APPS = [
     'openedx.features.course_duration_limits',
     'openedx.features.content_type_gating',
     'openedx.features.discounts',
+    'openedx.features.effort_estimation',
 
     'lms.djangoapps.experiments',
 
@@ -3045,7 +3094,6 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
-    'EXCEPTION_HANDLER': 'openedx.core.lib.request_utils.custom_exception_handler',
     'PAGE_SIZE': 10,
     'URL_FORMAT_OVERRIDE': None,
     'DEFAULT_THROTTLE_RATES': {
@@ -3824,6 +3872,7 @@ ACCOUNT_VISIBILITY_CONFIGURATION["custom_shareable_fields"] = (
 ACCOUNT_VISIBILITY_CONFIGURATION["admin_fields"] = (
     ACCOUNT_VISIBILITY_CONFIGURATION["custom_shareable_fields"] + [
         "email",
+        "id",
         "extended_profile",
         "gender",
         "state",
@@ -4337,7 +4386,10 @@ RATELIMIT_RATE = '120/m'
 
 ##### LOGISTRATION RATE LIMIT SETTINGS #####
 LOGISTRATION_RATELIMIT_RATE = '100/5m'
+LOGISTRATION_PER_EMAIL_RATELIMIT_RATE = '30/5m'
 LOGISTRATION_API_RATELIMIT = '20/m'
+RESET_PASSWORD_TOKEN_VALIDATE_API_RATELIMIT = '30/7d'
+RESET_PASSWORD_API_RATELIMIT = '30/7d'
 
 ##### PASSWORD RESET RATE LIMIT SETTINGS #####
 PASSWORD_RESET_IP_RATE = '1/m'
@@ -4466,8 +4518,7 @@ PROGRAM_CONSOLE_MICROFRONTEND_URL = None
 # .. setting_name: LEARNING_MICROFRONTEND_URL
 # .. setting_default: None
 # .. setting_description: Base URL of the micro-frontend-based courseware page.
-# .. setting_warning: Also set site's ENABLE_COURSEWARE_MICROFRONTEND or
-#     FEATURES['ENABLE_COURSEWARE_MICROFRONTEND'] and courseware.courseware_mfe waffle flag
+# .. setting_warning: Also set site's courseware.courseware_mfe waffle flag.
 LEARNING_MICROFRONTEND_URL = None
 
 ############### Settings for the ace_common plugin #################

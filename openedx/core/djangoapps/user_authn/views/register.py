@@ -35,7 +35,7 @@ from social_django import utils as social_utils
 from common.djangoapps import third_party_auth
 # Note that this lives in LMS, so this dependency should be refactored.
 # TODO Have the discussions code subscribe to the REGISTER_USER signal instead.
-from common.djangoapps.student.helpers import get_next_url_for_login_page
+from common.djangoapps.student.helpers import get_next_url_for_login_page, get_redirect_url_with_host
 from lms.djangoapps.discussion.notification_prefs.views import enable_notifications
 from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
 from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -342,7 +342,11 @@ def _track_user_registration(user, profile, params, third_party_provider):
                 # ..pii: Learner email is sent to Segment in following line and will be associated with analytics data.
                 'email': user.email,
                 'label': params.get('course_id'),
-                'provider': third_party_provider.name if third_party_provider else None
+                'provider': third_party_provider.name if third_party_provider else None,
+                'is_gender_selected': bool(profile.gender_display),
+                'is_year_of_birth_selected': bool(profile.year_of_birth),
+                'is_education_selected': bool(profile.level_of_education_display),
+                'is_goal_set': bool(profile.goals),
             },
         )
 
@@ -506,7 +510,8 @@ class RegistrationView(APIView):
         if response:
             return response
 
-        redirect_url = get_next_url_for_login_page(request, include_host=True)
+        redirect_to, root_url = get_next_url_for_login_page(request, include_host=True)
+        redirect_url = get_redirect_url_with_host(root_url, redirect_to)
         response = self._create_response(request, {}, status_code=200, redirect_url=redirect_url)
         set_logged_in_cookies(request, response, user)
         return response

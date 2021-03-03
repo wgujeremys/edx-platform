@@ -4,7 +4,6 @@ Signal handler for enabling/disabling self-generated certificates based on the c
 
 import logging
 
-import six
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -44,7 +43,7 @@ def _update_cert_settings_on_pacing_change(sender, updated_course_overview, **kw
         updated_course_overview.id,
         updated_course_overview.self_paced,
     )
-    log.info(u'Certificate Generation Setting Toggled for {course_id} via pacing change'.format(
+    log.info('Certificate Generation Setting Toggled for {course_id} via pacing change'.format(
         course_id=updated_course_overview.id
     ))
 
@@ -54,11 +53,16 @@ def _listen_for_certificate_whitelist_append(sender, instance, **kwargs):  # pyl
     """
     Listen for a user being added to or modified on the whitelist (allowlist)
     """
+    if is_using_certificate_allowlist_and_is_on_allowlist(instance.user, instance.course_id):
+        log.info(f'{instance.course_id} is using allowlist certificates, and the user {instance.user.id} is now on '
+                 f'its allowlist. Attempt will be made to generate an allowlist certificate.')
+        return generate_allowlist_certificate_task(instance.user, instance.course_id)
+
     if not auto_certificate_generation_enabled():
         return
 
-    if fire_ungenerated_certificate_task(instance.user, instance.course_id):
-        log.info(u'Certificate generation task initiated for {user} : {course} via whitelist'.format(
+    if _fire_ungenerated_certificate_task(instance.user, instance.course_id):
+        log.info('Certificate generation task initiated for {user} : {course} via whitelist'.format(
             user=instance.user.id,
             course=instance.course_id
         ))
@@ -70,11 +74,16 @@ def listen_for_passing_grade(sender, user, course_id, **kwargs):  # pylint: disa
     Listen for a learner passing a course, send cert generation task,
     downstream signal from COURSE_GRADE_CHANGED
     """
+    if is_using_certificate_allowlist_and_is_on_allowlist(user, course_id):
+        log.info(f'{course_id} is using allowlist certificates, and the user {user.id} is on its allowlist. Attempt '
+                 f'will be made to generate an allowlist certificate as a passing grade was received.')
+        return generate_allowlist_certificate_task(user, course_id)
+
     if not auto_certificate_generation_enabled():
         return
 
-    if fire_ungenerated_certificate_task(user, course_id):
-        log.info(u'Certificate generation task initiated for {user} : {course} via passing grade'.format(
+    if _fire_ungenerated_certificate_task(user, course_id):
+        log.info('Certificate generation task initiated for {user} : {course} via passing grade'.format(
             user=user.id,
             course=course_id
         ))
@@ -96,7 +105,7 @@ def _listen_for_failing_grade(sender, user, course_id, grade, **kwargs):  # pyli
     if cert is not None:
         if CertificateStatuses.is_passing_status(cert.status):
             cert.mark_notpassing(grade.percent)
-            log.info(u'Certificate marked not passing for {user} : {course} via failing grade: {grade}'.format(
+            log.info('Certificate marked not passing for {user} : {course} via failing grade: {grade}'.format(
                 user=user.id,
                 course=course_id,
                 grade=grade
@@ -107,7 +116,7 @@ def _listen_for_failing_grade(sender, user, course_id, grade, **kwargs):  # pyli
 def _listen_for_id_verification_status_changed(sender, user, **kwargs):  # pylint: disable=unused-argument
     """
     Catches a track change signal, determines user status,
-    calls fire_ungenerated_certificate_task for passing grades
+    calls _fire_ungenerated_certificate_task for passing grades
     """
     if not auto_certificate_generation_enabled():
         return
@@ -118,11 +127,16 @@ def _listen_for_id_verification_status_changed(sender, user, **kwargs):  # pylin
     expected_verification_status = IDVerificationService.user_status(user)
     expected_verification_status = expected_verification_status['status']
     for enrollment in user_enrollments:
-        if grade_factory.read(user=user, course=enrollment.course_overview).passed:
-            if fire_ungenerated_certificate_task(user, enrollment.course_id, expected_verification_status):
+        if is_using_certificate_allowlist_and_is_on_allowlist(user, enrollment.course_id):
+            log.info(f'{enrollment.course_id} is using allowlist certificates, and the user {user.id} is on its '
+                     f'allowlist. Attempt will be made to generate an allowlist certificate. Id verification status '
+                     f'is {expected_verification_status}')
+            generate_allowlist_certificate_task(user, enrollment.course_id)
+        elif grade_factory.read(user=user, course=enrollment.course_overview).passed:
+            if _fire_ungenerated_certificate_task(user, enrollment.course_id, expected_verification_status):
                 message = (
-                    u'Certificate generation task initiated for {user} : {course} via track change ' +
-                    u'with verification status of {status}'
+                    'Certificate generation task initiated for {user} : {course} via track change ' +
+                    'with verification status of {status}'
                 )
                 log.info(message.format(
                     user=user.id,
@@ -131,7 +145,7 @@ def _listen_for_id_verification_status_changed(sender, user, **kwargs):  # pylin
                 ))
 
 
-def fire_ungenerated_certificate_task(user, course_key, expected_verification_status=None):
+def _fire_ungenerated_certificate_task(user, course_key, expected_verification_status=None):
     """
     Helper function to fire certificate generation task.
     Auto-generation of certificates is available for following course modes:
@@ -153,16 +167,8 @@ def fire_ungenerated_certificate_task(user, course_key, expected_verification_st
     traffic to workers.
     """
 
-    message = u'Entered into Ungenerated Certificate task for {user} : {course}'
+    message = 'Entered into Ungenerated Certificate task for {user} : {course}'
     log.info(message.format(user=user.id, course=course_key))
-
-    if is_using_certificate_allowlist_and_is_on_allowlist(user, course_key):
-        log.info('{course} is using allowlist certificates, and the user {user} is on its allowlist. Attempt will be '
-                 'made to generate an allowlist certificate.'.format(course=course_key, user=user.id))
-        return generate_allowlist_certificate_task(user, course_key)
-
-    log.info('{course} is not using allowlist certificates (or user {user} is not on its allowlist). The normal '
-             'generation logic will be followed.'.format(course=course_key, user=user.id))
 
     allowed_enrollment_modes_list = [
         CourseMode.VERIFIED,
@@ -181,14 +187,14 @@ def fire_ungenerated_certificate_task(user, course_key, expected_verification_st
 
     if generate_learner_certificate:
         kwargs = {
-            'student': six.text_type(user.id),
-            'course_key': six.text_type(course_key)
+            'student': str(user.id),
+            'course_key': str(course_key)
         }
         if expected_verification_status:
-            kwargs['expected_verification_status'] = six.text_type(expected_verification_status)
+            kwargs['expected_verification_status'] = str(expected_verification_status)
         generate_certificate.apply_async(countdown=CERTIFICATE_DELAY_SECONDS, kwargs=kwargs)
         return True
 
-    message = u'Certificate Generation task failed for {user} : {course}'
+    message = 'Certificate Generation task failed for {user} : {course}'
     log.info(message.format(user=user.id, course=course_key))
     return False

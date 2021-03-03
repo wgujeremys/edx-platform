@@ -34,7 +34,7 @@ class DraftVersioningModuleStore(SplitMongoModuleStore, ModuleStoreDraftAndPubli
             user_id: id of the user creating the course
             kwargs: Any optional arguments understood by a subset of modulestores to customize instantiation
 
-        Returns: a CourseDescriptor
+        Returns: a CourseBlock
         """
         master_branch = kwargs.pop('master_branch', ModuleStoreEnum.BranchName.draft)
         with self.bulk_operations(CourseLocator(org, course, run), ignore_case=True):
@@ -361,7 +361,7 @@ class DraftVersioningModuleStore(SplitMongoModuleStore, ModuleStoreDraftAndPubli
             # check the children in the draft
             if 'children' in draft_block.fields:
                 return any(
-                    [has_changes_subtree(child_block_id) for child_block_id in draft_block.fields['children']]
+                    has_changes_subtree(child_block_id) for child_block_id in draft_block.fields['children']
                 )
 
             return False

@@ -6,8 +6,6 @@ General testing utilities.
 import functools
 import sys
 from contextlib import contextmanager
-
-import pytest  # lint-amnesty, pylint: disable=unused-import
 from django.dispatch import Signal
 from markupsafe import escape
 from mock import Mock, patch
@@ -92,15 +90,15 @@ class MockSignalHandlerMixin(object):
             mock_handler = Mock(spec=handler)
             mock_signal.connect(mock_handler)
             yield
-            self.assertTrue(mock_handler.called)
+            assert mock_handler.called
             mock_args, mock_kwargs = mock_handler.call_args
             if 'exclude_args' in kwargs:
                 for key in kwargs['exclude_args']:
-                    self.assertIn(key, mock_kwargs)
+                    assert key in mock_kwargs
                     del mock_kwargs[key]
                 del kwargs['exclude_args']
-            self.assertEqual(mock_args, args)
-            self.assertEqual(mock_kwargs, dict(kwargs, signal=mock_signal))
+            assert mock_args == args
+            assert mock_kwargs == dict(kwargs, signal=mock_signal)
 
 
 @contextmanager

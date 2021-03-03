@@ -28,6 +28,7 @@ from openedx.features.enterprise_support.utils import get_data_consent_share_cac
 from common.djangoapps.third_party_auth.pipeline import get as get_partial_pipeline
 from common.djangoapps.third_party_auth.provider import Registry
 
+
 try:
     from enterprise.models import (
         EnterpriseCustomer,
@@ -35,7 +36,9 @@ try:
         EnterpriseCustomerUser,
         PendingEnterpriseCustomerUser
     )
-    from enterprise.api.v1.serializers import EnterpriseCustomerUserReadOnlySerializer
+    from enterprise.api.v1.serializers import (
+        EnterpriseCustomerUserReadOnlySerializer, EnterpriseCustomerUserWriteSerializer
+    )
     from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 except ImportError:  # pragma: no cover
     pass
@@ -299,6 +302,32 @@ class EnterpriseApiServiceClient(EnterpriseServiceClientMixin, EnterpriseApiClie
                 cache_enterprise(enterprise_customer)
 
         return enterprise_customer
+
+
+def activate_learner_enterprise(request, user, enterprise_customer):
+    """
+    Allow an enterprise learner to activate one of learner's linked enterprises.
+    """
+    serializer = EnterpriseCustomerUserWriteSerializer(data={
+        'enterprise_customer': enterprise_customer,
+        'username': user.username,
+        'active': True
+    })
+    if serializer.is_valid():
+        serializer.save()
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_customer_user.update_session(request)
+        LOGGER.info(
+            '[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
+            user.username,
+            enterprise_customer,
+        )
+        return True
+
+    return False
 
 
 def data_sharing_consent_required(view_func):
@@ -786,7 +815,8 @@ def get_enterprise_learner_portal_enabled_message(request):
         learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL + '/' + enterprise_customer['slug']
         return Text(_(
             "Your organization {bold_start}{enterprise_customer_name}{bold_end} uses a custom dashboard for learning. "
-            "{link_start}Click here{link_end} to continue in that experience."
+            "{link_start}Click here {screen_reader_start}for your {enterprise_customer_name} dashboard,"
+            "{screen_reader_end}{link_end} to continue in that experience."
         )).format(
             enterprise_customer_name=enterprise_customer['name'],
             link_start=HTML("<a href='{learner_portal_url}'>").format(
@@ -795,6 +825,8 @@ def get_enterprise_learner_portal_enabled_message(request):
             link_end=HTML("</a>"),
             bold_start=HTML("<b>"),
             bold_end=HTML("</b>"),
+            screen_reader_start=HTML("<span class='sr-only'>"),
+            screen_reader_end=HTML("</span>"),
         )
     else:
         return None

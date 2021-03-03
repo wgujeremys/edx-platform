@@ -228,7 +228,7 @@ class LibraryContentBlock(
                 raise NotImplementedError("Unsupported mode.")
             selected_keys |= added_block_keys
 
-        if any([invalid_block_keys, overlimit_block_keys, added_block_keys]):
+        if any((invalid_block_keys, overlimit_block_keys, added_block_keys)):
             selected = list(selected_keys)
             random.shuffle(selected)
 
@@ -714,7 +714,7 @@ class LibrarySummary(object):
     @property
     def display_org_with_default(self):
         """
-        Org display names are not implemented. This just provides API compatibility with CourseDescriptor.
+        Org display names are not implemented. This just provides API compatibility with CourseBlock.
         Always returns the raw 'org' field from the key.
         """
         return self.location.library_key.org
@@ -722,7 +722,7 @@ class LibrarySummary(object):
     @property
     def display_number_with_default(self):
         """
-        Display numbers are not implemented. This just provides API compatibility with CourseDescriptor.
+        Display numbers are not implemented. This just provides API compatibility with CourseBlock.
         Always returns the raw 'library' field from the key.
         """
         return self.location.library_key.library

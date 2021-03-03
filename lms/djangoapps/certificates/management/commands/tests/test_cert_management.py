@@ -60,7 +60,7 @@ class CertificateManagementTest(ModuleStoreTestCase):
     def _assert_cert_status(self, course_key, user, expected_status):
         """Check the status of a certificate. """
         cert = GeneratedCertificate.eligible_certificates.get(user=user, course_id=course_key)
-        self.assertEqual(cert.status, expected_status)
+        assert cert.status == expected_status
 
 
 @ddt.ddt
@@ -179,24 +179,26 @@ class RegenerateCertificatesTest(CertificateManagementTest):
         self._create_cert(key, self.user, CertificateStatuses.downloadable)
         badge_class = get_completion_badge(key, self.user)
         BadgeAssertionFactory(badge_class=badge_class, user=self.user)
-        self.assertTrue(BadgeAssertion.objects.filter(user=self.user, badge_class=badge_class))
+        assert BadgeAssertion.objects.filter(user=self.user, badge_class=badge_class)
         self.course.issue_badges = issue_badges
         self.store.update_item(self.course, None)
 
         args = u'-u {} -c {}'.format(self.user.email, text_type(key))
         call_command(self.command, *args.split(' '))
 
-        xqueue.return_value.regen_cert.assert_called_with(
+        assert xqueue.return_value.regen_cert.call_args.args == (
             self.user,
             key,
-            course=self.course,
-            forced_grade=None,
-            template_file=None,
-            generate_pdf=True
         )
-        self.assertEqual(
-            bool(BadgeAssertion.objects.filter(user=self.user, badge_class=badge_class)), not issue_badges
-        )
+        regen_cert_call_kwargs = xqueue.return_value.regen_cert.call_args.kwargs
+        assert regen_cert_call_kwargs.pop('course').location == self.course.location
+        assert regen_cert_call_kwargs == {
+            'forced_grade': None,
+            'template_file': None,
+            'generate_pdf': True,
+        }
+
+        assert bool(BadgeAssertion.objects.filter(user=self.user, badge_class=badge_class)) == (not issue_badges)
 
     @override_settings(CERT_QUEUE='test-queue')
     @patch('capa.xqueue_interface.XQueueInterface.send_to_queue', spec=True)
@@ -216,8 +218,8 @@ class RegenerateCertificatesTest(CertificateManagementTest):
             user=self.user,
             course_id=key
         )
-        self.assertEqual(certificate.status, CertificateStatuses.notpassing)
-        self.assertFalse(mock_send_to_queue.called)
+        assert certificate.status == CertificateStatuses.notpassing
+        assert not mock_send_to_queue.called
 
 
 class UngenerateCertificatesTest(CertificateManagementTest):
@@ -249,9 +251,9 @@ class UngenerateCertificatesTest(CertificateManagementTest):
             args = u'-c {} --insecure'.format(text_type(key))
             call_command(self.command, *args.split(' '))
 
-        self.assertTrue(mock_send_to_queue.called)
+        assert mock_send_to_queue.called
         certificate = GeneratedCertificate.eligible_certificates.get(
             user=self.user,
             course_id=key
         )
-        self.assertEqual(certificate.status, CertificateStatuses.generating)
+        assert certificate.status == CertificateStatuses.generating

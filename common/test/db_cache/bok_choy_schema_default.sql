@@ -431,7 +431,7 @@ CREATE TABLE `auth_permission` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `auth_permission_content_type_id_codename_01ab375a_uniq` (`content_type_id`,`codename`),
   CONSTRAINT `auth_permission_content_type_id_2f476e4b_fk_django_co` FOREIGN KEY (`content_type_id`) REFERENCES `django_content_type` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3008 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3020 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `auth_registration`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -967,7 +967,7 @@ CREATE TABLE `canvas_canvasenterprisecustomerconfiguration` (
   `catalogs_to_transmit` longtext,
   `client_id` varchar(255) DEFAULT NULL,
   `client_secret` varchar(255) DEFAULT NULL,
-  `canvas_account_id` int(11) DEFAULT NULL,
+  `canvas_account_id` bigint(20) DEFAULT NULL,
   `canvas_base_url` varchar(255) DEFAULT NULL,
   `enterprise_customer_id` char(32) NOT NULL,
   `refresh_token` varchar(255) NOT NULL,
@@ -1028,7 +1028,7 @@ CREATE TABLE `canvas_historicalcanvasenterprisecustomerconfiguration` (
   `catalogs_to_transmit` longtext,
   `client_id` varchar(255) DEFAULT NULL,
   `client_secret` varchar(255) DEFAULT NULL,
-  `canvas_account_id` int(11) DEFAULT NULL,
+  `canvas_account_id` bigint(20) DEFAULT NULL,
   `canvas_base_url` varchar(255) DEFAULT NULL,
   `history_id` int(11) NOT NULL AUTO_INCREMENT,
   `history_date` datetime(6) NOT NULL,
@@ -1179,6 +1179,20 @@ CREATE TABLE `celery_utils_failedtask` (
   KEY `celery_utils_failedtask_task_name_exc_efb8c9be_idx` (`task_name`,`exc`),
   KEY `celery_utils_failedtask_task_id_37af0933` (`task_id`),
   KEY `celery_utils_failedtask_datetime_resolved_8160e407` (`datetime_resolved`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `certificates_allowlistgenerationconfiguration`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `certificates_allowlistgenerationconfiguration` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `change_date` datetime(6) NOT NULL,
+  `enabled` tinyint(1) NOT NULL,
+  `arguments` longtext NOT NULL,
+  `changed_by_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `certificates_allowli_changed_by_id_8c30e04b_fk_auth_user` (`changed_by_id`),
+  CONSTRAINT `certificates_allowli_changed_by_id_8c30e04b_fk_auth_user` FOREIGN KEY (`changed_by_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `certificates_certificategenerationconfiguration`;
@@ -2070,6 +2084,7 @@ CREATE TABLE `course_overviews_courseoverview` (
   `end_date` datetime(6) DEFAULT NULL,
   `start_date` datetime(6) DEFAULT NULL,
   `banner_image_url` longtext NOT NULL,
+  `has_highlights` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -2176,6 +2191,7 @@ CREATE TABLE `course_overviews_historicalcourseoverview` (
   `end_date` datetime(6) DEFAULT NULL,
   `start_date` datetime(6) DEFAULT NULL,
   `banner_image_url` longtext NOT NULL,
+  `has_highlights` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`history_id`),
   KEY `course_overviews_his_history_user_id_e21063d9_fk_auth_user` (`history_user_id`),
   KEY `course_overviews_historicalcourseoverview_id_647043f0` (`id`),
@@ -2969,7 +2985,7 @@ CREATE TABLE `django_content_type` (
   `model` varchar(100) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `django_content_type_app_label_model_76bd3d3b_uniq` (`app_label`,`model`)
-) ENGINE=InnoDB AUTO_INCREMENT=853 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=856 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `django_migrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -2980,7 +2996,7 @@ CREATE TABLE `django_migrations` (
   `name` varchar(255) NOT NULL,
   `applied` datetime(6) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=828 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=839 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `django_openid_auth_association`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -3608,6 +3624,7 @@ CREATE TABLE `enterprise_enterprisecustomeridentityprovider` (
   `modified` datetime(6) NOT NULL,
   `provider_id` varchar(50) NOT NULL,
   `enterprise_customer_id` char(32) NOT NULL,
+  `default_provider` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `provider_id` (`provider_id`),
   KEY `enterprise_enterprisecustom_enterprise_customer_id_40b39097` (`enterprise_customer_id`),
@@ -4762,6 +4779,19 @@ CREATE TABLE `lti_consumer_lticonfiguration` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `config_id` (`config_id`),
   KEY `lti_consumer_lticonfiguration_location_e7e37735` (`location`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `lti_consumer_ltidlcontentitem`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `lti_consumer_ltidlcontentitem` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `content_type` varchar(255) NOT NULL,
+  `attributes` longtext NOT NULL,
+  `lti_configuration_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `lti_consumer_ltidlco_lti_configuration_id_887d35fa_fk_lti_consu` (`lti_configuration_id`),
+  CONSTRAINT `lti_consumer_ltidlco_lti_configuration_id_887d35fa_fk_lti_consu` FOREIGN KEY (`lti_configuration_id`) REFERENCES `lti_consumer_lticonfiguration` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `lti_provider_gradedassignment`;
@@ -5968,6 +5998,7 @@ CREATE TABLE `sap_success_factors_sapsuccessfactorslearnerdatatransmission3ce5` 
   `error_message` longtext NOT NULL,
   `created` datetime(6) NOT NULL,
   `total_hours` double DEFAULT NULL,
+  `credit_hours` double DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `sap_success_factors_sapsucc_enterprise_course_enrollmen_99be77d5` (`enterprise_course_enrollment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -6648,6 +6679,22 @@ CREATE TABLE `student_userattribute` (
   UNIQUE KEY `student_userattribute_user_id_name_70e18f46_uniq` (`user_id`,`name`),
   KEY `student_userattribute_name_a55155e3` (`name`),
   CONSTRAINT `student_userattribute_user_id_19c01f5e_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `student_usercelebration`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `student_usercelebration` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `created` datetime(6) NOT NULL,
+  `modified` datetime(6) NOT NULL,
+  `last_day_of_streak` date DEFAULT NULL,
+  `streak_length` int(11) NOT NULL,
+  `longest_ever_streak` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `student_usercelebration_user_id_8682222f_fk_auth_user_id` FOREIGN KEY (`user_id`) REFERENCES `auth_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `student_userpasswordtogglehistory`;

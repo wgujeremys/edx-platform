@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This is the common settings file, intended to set sane defaults. If you have a
 piece of configuration that's dependent on a set of feature flags being set,
@@ -1541,6 +1540,7 @@ INSTALLED_APPS = [
     'openedx.features.course_duration_limits',
     'openedx.features.content_type_gating',
     'openedx.features.discounts',
+    'openedx.features.effort_estimation',
     'lms.djangoapps.experiments',
 
     'openedx.core.djangoapps.external_user_ids',
@@ -2030,7 +2030,7 @@ MANUAL_ENROLLMENT_ROLE_CHOICES = ['Learner', 'Support', 'Partner']
 ############## Settings for the Discovery App ######################
 
 COURSE_CATALOG_URL_ROOT = 'http://localhost:8008'
-COURSE_CATALOG_API_URL = '{}/api/v1'.format(COURSE_CATALOG_URL_ROOT)
+COURSE_CATALOG_API_URL = f'{COURSE_CATALOG_URL_ROOT}/api/v1'
 
 # which access.py permission name to check in order to determine if a course is visible in
 # the course catalog. We default this to the legacy permission 'see_exists'.
@@ -2337,7 +2337,11 @@ DISABLE_DEPRECATED_SIGNUP_URL = False
 
 ##### LOGISTRATION RATE LIMIT SETTINGS #####
 LOGISTRATION_RATELIMIT_RATE = '100/5m'
+LOGISTRATION_PER_EMAIL_RATELIMIT_RATE = '30/5m'
 LOGISTRATION_API_RATELIMIT = '20/m'
+RESET_PASSWORD_TOKEN_VALIDATE_API_RATELIMIT = '30/7d'
+RESET_PASSWORD_API_RATELIMIT = '30/7d'
+
 
 ##### REGISTRATION RATE LIMIT SETTINGS #####
 REGISTRATION_VALIDATION_RATELIMIT = '30/7d'
