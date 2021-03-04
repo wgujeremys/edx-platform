@@ -627,6 +627,7 @@ class SplitModuleCourseTests(SplitModuleTest):
         assert course.location.org == 'testx'
         assert course.category == 'course', 'wrong category'
         assert len(course.tabs) == 5, 'wrong number of tabs'
+        assert "course_info" not in [tab["type"] for tab in course.tabs], "should not contain course_info"
         assert course.display_name == 'The Ancient Greek Hero', 'wrong display name'
         assert course.advertised_start == 'Fall 2013', 'advertised_start'
         assert len(course.children) == 4, 'children'
@@ -684,6 +685,7 @@ class SplitModuleCourseTests(SplitModuleTest):
             assert course.location.course_key.course == 'wonderful'
             assert course.category == 'course', 'wrong category'
             assert len(course.tabs) == 3, 'wrong number of tabs'
+            assert "course_info" not in [tab["type"] for tab in course.tabs], "should not contain course_info"
             assert course.display_name == 'The most wonderful course', course.display_name
             assert course.advertised_start is None
             assert len(course.children) == 0, 'children'
@@ -1094,6 +1096,7 @@ class SplitModuleItemTests(SplitModuleTest):
             assert block.location.course == 'GreekHero'
             assert block.location.run == 'run'
             assert len(block.tabs) == 5, 'wrong number of tabs'
+            assert "course_info" not in [tab["type"] for tab in course.tabs], "should not contain course_info"
             assert block.display_name == 'The Ancient Greek Hero'
             assert block.advertised_start == 'Fall 2013'
             assert len(block.children) == 4
