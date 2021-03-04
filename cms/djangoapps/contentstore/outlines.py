@@ -195,7 +195,6 @@ def update_outline_from_modulestore(course_key):
     # from the modulestore errors out, we still have the course_key reported in
     # New Relic for easier trace debugging.
     set_custom_attribute('course_id', str(course_key))
-
     course_outline_data = get_outline_from_modulestore(course_key)
     set_custom_attribute('num_sequences', len(course_outline_data.sequences))
     replace_course_outline(course_outline_data)
