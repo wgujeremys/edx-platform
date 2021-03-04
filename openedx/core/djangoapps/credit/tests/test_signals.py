@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import ddt
 import pytz
 from django.test.client import RequestFactory
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from common.djangoapps.course_modes.models import CourseMode
 from openedx.core.djangoapps.credit.api import get_credit_requirement_status, set_credit_requirements
@@ -39,7 +39,7 @@ class TestMinGradedRequirementStatus(ModuleStoreTestCase):
     }
 
     def setUp(self):
-        super(TestMinGradedRequirementStatus, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         self.course = CourseFactory.create(
             org='Robot', number='999', display_name='Test Course'
         )
