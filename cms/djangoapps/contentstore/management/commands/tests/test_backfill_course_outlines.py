@@ -10,6 +10,8 @@ from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
 from xmodule.modulestore.tests.factories import CourseFactory, ItemFactory
 
+from ....outlines import update_outline_from_modulestore
+
 
 class BackfillCourseOutlinesTest(SharedModuleStoreTestCase):
     """
@@ -84,7 +86,7 @@ class BackfillCourseOutlinesTest(SharedModuleStoreTestCase):
     def test_end_to_end(self):
         """Normal invocation, it should skip only the Old Mongo course."""
         # In the beginning, we have no outlines...
-        assert not get_course_keys_with_outlines.exists()
+        assert not get_course_keys_with_outlines().exists()
 
         # Run command and outlines appear for Split Mongo courses...
         call_command("backfill_course_outlines")
@@ -94,3 +96,23 @@ class BackfillCourseOutlinesTest(SharedModuleStoreTestCase):
             CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run3"),
         }
 
+    def test_end_to_end(self):
+        """Also works when we've manually created one in advance."""
+        course_keys_with_outlines = set(get_course_keys_with_outlines())
+        assert not get_course_keys_with_outlines().exists()
+
+        # Manually create one
+        update_outline_from_modulestore(
+            CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run2")
+        )
+        assert set(get_course_keys_with_outlines()) == {
+            CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run2")
+        }
+
+        # backfill command should fill in the other
+        call_command("backfill_course_outlines")
+        course_keys_with_outlines = set(get_course_keys_with_outlines())
+        assert course_keys_with_outlines == {
+            CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run2"),
+            CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run3"),
+        }
