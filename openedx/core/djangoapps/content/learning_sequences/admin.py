@@ -12,6 +12,15 @@ from .models import LearningContext
 
 
 class LearningContextAdmin(admin.ModelAdmin):
+    """
+    This is a read-only model admin that is meant to be useful for querying.
+
+    Writes are disabled, because:
+
+    1. These values are auto-built/updated based on course publishes.
+    2. These are read either the Studio or LMS process, but it's only supposed
+       to be written to from the Studio process.
+    """
     list_display = (
         'context_key',
         'title',
@@ -29,7 +38,7 @@ class LearningContextAdmin(admin.ModelAdmin):
         'outline',
     )
     search_fields = ['context_key', 'title']
-    actions = ['rebuild_selected', 'rebuild_missing', 'rebuild_all']
+    actions = None
 
     def outline(self, obj):
         def json_serializer(_obj, _field, value):
@@ -62,11 +71,11 @@ class LearningContextAdmin(admin.ModelAdmin):
         pass
     rebuild_all.short_description = "Rebuild Outlines for all courses"
 
-    def get_actions(self, request):
-        actions = super().get_actions(request)
-        if 'delete_selected' in actions:
-            del actions['delete_selected']
-        return actions
+    def has_add_permission(self, request, _obj=None):
+        """
+        Disallow additions. See docstring for has_change_permission()
+        """
+        return False
 
     def has_change_permission(self, request, _obj=None):
         """
