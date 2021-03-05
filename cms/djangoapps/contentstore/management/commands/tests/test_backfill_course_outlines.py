@@ -96,7 +96,7 @@ class BackfillCourseOutlinesTest(SharedModuleStoreTestCase):
             CourseKey.from_string("course-v1:OpenEdX+OutlineCourse+Run3"),
         }
 
-    def test_end_to_end(self):
+    def test_partial(self):
         """Also works when we've manually created one in advance."""
         course_keys_with_outlines = set(get_course_keys_with_outlines())
         assert not get_course_keys_with_outlines().exists()
