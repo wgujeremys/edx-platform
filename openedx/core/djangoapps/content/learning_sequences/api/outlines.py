@@ -57,6 +57,7 @@ __all__ = [
     'replace_course_outline',
 ]
 
+
 def key_supports_outlines(opaque_key: OpaqueKey) -> bool:
     """
     Does this key-type support outlines?

@@ -52,15 +52,15 @@ class LearningContextAdmin(admin.ModelAdmin):
 
     def rebuild_selected(modeladmin, request, queryset):
         pass
-    rebuild_selected.short_description="Rebuild Outlines for selected courses"
+    rebuild_selected.short_description = "Rebuild Outlines for selected courses"
 
     def rebuild_missing(modeladmin, request, queryset):
         pass
-    rebuild_missing.short_description="Rebuild Outlines for courses that don't already have them."
+    rebuild_missing.short_description = "Rebuild Outlines for courses that don't already have them."
 
     def rebuild_all(modeladmin, request, queryset):
         pass
-    rebuild_all.short_description="Rebuild Outlines for all courses"
+    rebuild_all.short_description = "Rebuild Outlines for all courses"
 
     def get_actions(self, request):
         actions = super().get_actions(request)
